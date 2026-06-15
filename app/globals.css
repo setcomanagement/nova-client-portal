@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+/*
+  NOVA brand — "Concierge × Briefing" editorial system.
+  espresso = ink/nav inverse, caramel = accent/CTA, cream = page,
+  white = cards, ink = headings, mute = secondary, + sage/clay/honey status tints.
+*/
+:root {
+  --espresso: #3b2a1f;
+  --caramel: #a0703c;
+  --caramel-d: #875e30;
+  --cream: #f5efe5;
+  --bone: #faf6f0;
+  --ink: #20160e;
+  --mute: #8a7762;
+  --rule: #d8c9b4;
+
+  --sage: #566a3d; --sage-bg: #e9eedc;
+  --clay: #9c4a2d; --clay-bg: #f4e2d6;
+  --honey: #a9781e; --honey-bg: #f5ead0;
+
+  /* shadcn-style semantic tokens mapped onto the palette */
+  --background: var(--cream);
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --primary: var(--caramel);
+  --primary-foreground: #ffffff;
+  --secondary: #efe7d9;
+  --secondary-foreground: var(--espresso);
+  --accent: var(--caramel);
+  --accent-foreground: #ffffff;
+  --muted: #efe7d9;
+  --muted-foreground: var(--mute);
+  --destructive: #9c4a2d;
+  --destructive-foreground: #ffffff;
+  --border: #ece2d2;
+  --input: #e3d8c8;
+  --ring: var(--caramel);
+  --radius: 0.85rem;
+}
+
+@theme inline {
+  --color-espresso: var(--espresso);
+  --color-caramel: var(--caramel);
+  --color-cream: var(--cream);
+  --color-bone: var(--bone);
+  --color-ink: var(--ink);
+  --color-mute: var(--mute);
+  --color-sage: var(--sage);
+  --color-clay: var(--clay);
+  --color-honey: var(--honey);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+
+  --font-sans: var(--font-sans-i), -apple-system, system-ui, sans-serif;
+  --font-serif: var(--font-serif-f), Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  /* faint editorial ledger texture */
+  background-image: repeating-linear-gradient(
+    0deg, transparent, transparent 33px,
+    rgba(140, 110, 70, 0.028) 33px, rgba(140, 110, 70, 0.028) 34px
+  );
+}
+
+/* Editorial headings — in @layer base so text-color utilities (e.g. text-white
+   on the dark operator screens) can override the default ink color. */
+@layer base {
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+}
+
+/* Helper utilities used across the app */
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--caramel);
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.badge-good { background: var(--sage-bg); color: var(--sage); }
+.badge-bad { background: var(--clay-bg); color: var(--clay); }
+.badge-warn { background: var(--honey-bg); color: var(--honey); }
+.badge-up { background: #f0e3cf; color: var(--caramel-d); }
+.badge-neutral { background: #ece7dd; color: var(--mute); }
+.num { font-variant-numeric: tabular-nums; }
