@@ -27,14 +27,15 @@ function ModuleCard({
     <Link href={`/${slug}/modules/${m.id}`}>
       <Card className="h-full overflow-hidden p-0 transition duration-150 hover:-translate-y-0.5 hover:border-[color:var(--caramel)]/40 hover:shadow-md">
         <div
-          className="grid h-28 place-items-center"
+          className="flex h-28 items-center px-5"
           style={{ background: "radial-gradient(120% 130% at 30% 0%, #4a3526, #241910)" }}
         >
-          <span className="grid h-12 w-12 place-items-center rounded-full bg-white/90 text-espresso">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </span>
+          <p
+            aria-hidden
+            className="font-serif text-xl font-medium leading-tight text-bone sm:text-2xl"
+          >
+            {m.title}
+          </p>
         </div>
         <div className="p-5">
           <span className={`badge ${isDone ? "badge-good" : "badge-up"}`}>
