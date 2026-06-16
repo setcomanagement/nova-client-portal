@@ -135,3 +135,14 @@ body {
 .badge-up { background: #f0e3cf; color: var(--caramel-d); }
 .badge-neutral { background: #ece7dd; color: var(--mute); }
 .num { font-variant-numeric: tabular-nums; }
+
+/* Lesson body entrance — subtle fade + lift on mount / lesson change.
+   Keyed remount in module-course replays it on navigation. */
+@keyframes lesson-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.lesson-fade { animation: lesson-in 0.26s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .lesson-fade { animation: none; }
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Card } from "@/components/ui/card";
@@ -19,7 +19,7 @@ const mdComponents: Components = {
   // Large serif heading with a short amber underline accent.
   h1: ({ node, ...p }) => (
     <h1
-      className="mt-8 mb-4 font-serif text-2xl font-semibold text-ink after:mt-2 after:block after:h-[2px] after:w-[30%] after:bg-caramel after:content-['']"
+      className="mt-8 mb-4 font-serif text-2xl font-semibold text-ink after:mt-2 after:block after:h-[3px] after:w-[40%] after:bg-caramel after:content-['']"
       {...p}
     />
   ),
@@ -35,10 +35,14 @@ const mdComponents: Components = {
   ),
   p: ({ node, ...p }) => <p className="my-3" {...p} />,
   a: ({ node, ...p }) => (
-    <a className="text-caramel no-underline hover:underline" {...p} />
+    <a
+      className="text-caramel no-underline transition-colors hover:text-[color:var(--caramel-d)] hover:underline"
+      {...p}
+    />
   ),
+  // Bold shifts toward a deeper amber (not the bright accent) for brand warmth.
   strong: ({ node, ...p }) => (
-    <strong className="font-semibold text-ink" {...p} />
+    <strong className="font-semibold text-[color:var(--caramel-d)]" {...p} />
   ),
   ul: ({ node, ...p }) => <ul className="my-3 list-disc pl-5" {...p} />,
   ol: ({ node, ...p }) => <ol className="my-3 list-decimal pl-5" {...p} />,
@@ -123,15 +127,38 @@ export function ModuleCourse({
   const [done, setDone] = useState(completed);
   const [, start] = useTransition();
   const lesson = flat[active] ?? flat[0];
+  const topRef = useRef<HTMLDivElement>(null);
 
   function complete() {
     setDone(true);
     start(() => void markCompleteAction(slug, moduleId));
   }
 
+  // Visual un-complete: revert to the active "Mark complete" button within the
+  // session. No server action exists for un-completing and the data model is
+  // off-limits, so this is client-only — a refresh restores the saved state.
+  function uncomplete() {
+    setDone(false);
+  }
+
+  // Navigate to a lesson and bring its content back to the top of the viewport,
+  // clearing the sticky header (~80px) so the reader starts at the lesson head.
+  function select(idx: number) {
+    if (idx < 0 || idx >= flat.length) return;
+    setActive(idx);
+    const el = topRef.current;
+    if (el) {
+      const y = el.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+  }
+
+  const hasPrev = active > 0;
+  const hasNext = active < flat.length - 1;
+
   return (
-    <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-      <div className="flex flex-col gap-5">
+    <div className="grid items-start gap-5 lg:grid-cols-[1fr_320px]">
+      <div ref={topRef} key={active} className="lesson-fade flex flex-col gap-5">
         {lesson?.videoUrl && (
           <div
             className="grid aspect-video place-items-center rounded-2xl"
@@ -169,11 +196,42 @@ export function ModuleCourse({
             </div>
           )}
         </Card>
+
+        {/* Reading-flow navigation — flat list is ordered across chapters, so
+            prev/next naturally cross chapter boundaries. Ends hide their edge. */}
+        {(hasPrev || hasNext) && (
+          <nav className="flex items-center justify-between gap-3">
+            {hasPrev ? (
+              <button
+                type="button"
+                onClick={() => select(active - 1)}
+                className="inline-flex max-w-[48%] items-center gap-2 rounded-md border border-[color:var(--caramel)]/50 bg-bone px-4 py-2.5 text-sm font-medium text-espresso transition-colors hover:border-caramel hover:bg-secondary"
+              >
+                <span aria-hidden>←</span>
+                <span className="truncate">Previous lesson</span>
+              </button>
+            ) : (
+              <span />
+            )}
+            {hasNext && (
+              <button
+                type="button"
+                onClick={() => select(active + 1)}
+                className="inline-flex max-w-[48%] items-center gap-2 rounded-md border border-[color:var(--caramel)]/50 bg-bone px-4 py-2.5 text-sm font-medium text-espresso transition-colors hover:border-caramel hover:bg-secondary"
+              >
+                <span className="truncate">Next lesson</span>
+                <span aria-hidden>→</span>
+              </button>
+            )}
+          </nav>
+        )}
       </div>
 
-      <Card className="h-fit p-5">
+      <Card className="h-fit p-5 lg:sticky lg:top-[88px] lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
         <div className="mb-3 flex items-center justify-between">
-          <p className="eyebrow block">Curriculum</p>
+          <p className="eyebrow relative inline-block after:mt-1 after:block after:h-[2px] after:w-full after:bg-caramel after:content-['']">
+            Curriculum
+          </p>
           {done && <span className="badge badge-good">Completed</span>}
         </div>
         <div className="flex flex-col gap-1">
@@ -189,9 +247,12 @@ export function ModuleCourse({
                   <button
                     key={li}
                     type="button"
-                    onClick={() => setActive(idx)}
-                    className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm ${
-                      isActive ? "bg-secondary font-medium text-ink" : "hover:bg-secondary/60"
+                    onClick={() => select(idx)}
+                    aria-current={isActive ? "true" : undefined}
+                    className={`flex w-full items-center gap-2.5 rounded-lg border-l-2 px-3 py-2 text-left text-sm transition-colors duration-150 ${
+                      isActive
+                        ? "border-caramel bg-secondary font-semibold text-ink"
+                        : "border-transparent text-foreground hover:bg-secondary/60"
                     }`}
                   >
                     <span className="grid h-5 w-5 flex-none place-items-center rounded-md border border-[color:var(--rule)] text-[11px] text-muted-foreground">
@@ -204,15 +265,28 @@ export function ModuleCourse({
             </div>
           ))}
         </div>
-        <Button
-          type="button"
-          variant={done ? "outline" : "accent"}
-          size="sm"
-          className="mt-4 w-full"
-          onClick={complete}
-        >
-          {done ? "Completed ✓" : "Mark complete"}
-        </Button>
+        {done ? (
+          // Quiet "completed" pill — muted amber tint, brand-brown text. Hover
+          // hints it's clickable to un-complete (reverts to the active button).
+          <button
+            type="button"
+            onClick={uncomplete}
+            title="Click to un-complete"
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md border border-[color:var(--caramel)]/30 bg-[color:var(--caramel)]/12 px-3 py-2 text-sm font-medium text-espresso transition-colors hover:border-[color:var(--caramel)]/50 hover:bg-[color:var(--caramel)]/20"
+          >
+            ✓ Completed
+          </button>
+        ) : (
+          <Button
+            type="button"
+            variant="accent"
+            size="sm"
+            className="mt-4 w-full"
+            onClick={complete}
+          >
+            Mark complete
+          </Button>
+        )}
       </Card>
     </div>
   );

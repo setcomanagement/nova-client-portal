@@ -25,7 +25,7 @@ function ModuleCard({
   const lessons = chapters.reduce((s, c) => s + c.lessons.length, 0);
   return (
     <Link href={`/${slug}/modules/${m.id}`}>
-      <Card className="h-full overflow-hidden p-0 transition hover:-translate-y-0.5 hover:shadow-md">
+      <Card className="h-full overflow-hidden p-0 transition duration-150 hover:-translate-y-0.5 hover:border-[color:var(--caramel)]/40 hover:shadow-md">
         <div
           className="grid h-28 place-items-center"
           style={{ background: "radial-gradient(120% 130% at 30% 0%, #4a3526, #241910)" }}
