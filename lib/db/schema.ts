@@ -72,6 +72,7 @@ export const users = pgTable(
 export type Lesson = {
   title: string;
   videoUrl?: string;
+  body?: string;
   summary?: string;
   links?: { label: string; url?: string }[];
 };
@@ -109,6 +110,9 @@ export const modules = pgTable("modules", {
   }),
   title: text("title").notNull(),
   description: text("description"),
+  // Catalog section. Null/empty falls back to the default category in the
+  // render layer (see lib/constants.ts) — existing rows need no backfill.
+  category: text("category"),
   videoUrl: text("video_url"),
   chapters: jsonb("chapters").$type<Chapter[]>(),
   orderIndex: integer("order_index").notNull().default(0),

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { Chapter, Lesson } from "@/lib/db/schema";
+import { MODULE_CATEGORIES } from "@/lib/constants";
 import { deleteModuleAction, saveModuleAction } from "../actions";
 
 const field =
@@ -10,22 +11,25 @@ const ghost =
   "inline-flex items-center gap-1 rounded-md border border-[#3a2a1c] px-2.5 py-1 font-mono text-[11px] text-[#9c886a] transition hover:border-caramel hover:text-caramel";
 
 function emptyLesson(): Lesson {
-  return { title: "", videoUrl: "", summary: "", links: [] };
+  return { title: "", videoUrl: "", body: "", summary: "", links: [] };
 }
 
 export function CourseBuilder({
   id,
   initialTitle,
   initialDescription,
+  initialCategory,
   initialChapters,
 }: {
   id: string;
   initialTitle: string;
   initialDescription: string;
+  initialCategory: string;
   initialChapters: Chapter[];
 }) {
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
+  const [category, setCategory] = useState(initialCategory);
   const [chapters, setChapters] = useState<Chapter[]>(
     initialChapters.length ? initialChapters : [],
   );
@@ -87,7 +91,12 @@ export function CourseBuilder({
     setError(null);
     setSaved(false);
     start(async () => {
-      const res = await saveModuleAction(id, { title, description, chapters });
+      const res = await saveModuleAction(id, {
+        title,
+        description,
+        category,
+        chapters,
+      });
       if (res.ok) setSaved(true);
       else setError(res.error ?? "Could not save.");
     });
@@ -123,6 +132,22 @@ export function CourseBuilder({
               placeholder="One line on what this module covers."
               className="mt-1 w-full border-0 bg-transparent text-sm text-[#c9b79c] outline-none placeholder:text-[#6b5a45]"
             />
+            <label className="mt-3 flex flex-col gap-1.5">
+              <span className="font-mono text-[11px] uppercase tracking-wide text-[#9c886a]">
+                Category
+              </span>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className={`${field} sm:max-w-xs`}
+              >
+                {MODULE_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         </div>
         <div className="mt-3 font-mono text-xs text-[#9c886a]">
@@ -214,6 +239,18 @@ export function CourseBuilder({
                     placeholder="Lesson summary / notes (optional)"
                     className={`${field} mt-2`}
                   />
+                  <label className="mt-2 flex flex-col gap-1.5">
+                    <span className="font-mono text-[11px] uppercase tracking-wide text-[#9c886a]">
+                      Lesson body (markdown)
+                    </span>
+                    <textarea
+                      value={ls.body ?? ""}
+                      onChange={(e) => setLesson(ci, li, { body: e.target.value })}
+                      rows={9}
+                      placeholder="Markdown content. Used when this lesson is text-based instead of a video."
+                      className={`${field} font-mono`}
+                    />
+                  </label>
                 </div>
               ))}
               <button type="button" onClick={() => addLesson(ci)} className={ghost}>

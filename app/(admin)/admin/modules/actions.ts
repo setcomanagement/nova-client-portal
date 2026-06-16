@@ -10,6 +10,7 @@ import {
   updateModule,
 } from "@/lib/db/queries";
 import type { Chapter } from "@/lib/db/schema";
+import { DEFAULT_MODULE_CATEGORY } from "@/lib/constants";
 
 export interface ModuleFormState {
   error?: string;
@@ -27,6 +28,7 @@ export async function createModuleAction(
   const mod = await createModule({
     title,
     description: description || null,
+    category: DEFAULT_MODULE_CATEGORY,
     chapters: [],
   });
   revalidatePath("/admin/modules");
@@ -36,7 +38,12 @@ export async function createModuleAction(
 /** Persist the full module (title, description, chapters JSON) from the builder. */
 export async function saveModuleAction(
   id: string,
-  payload: { title: string; description: string; chapters: Chapter[] },
+  payload: {
+    title: string;
+    description: string;
+    category: string;
+    chapters: Chapter[];
+  },
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
   const existing = await getModuleById(id);
@@ -48,10 +55,13 @@ export async function saveModuleAction(
     .map((c) => ({
       title: c.title.trim(),
       lessons: (c.lessons ?? [])
-        .filter((l) => l.title.trim())
+        // Keep a lesson if it has a title OR a body — body-only (text SOP)
+        // lessons are valid content and must not be pruned for lacking a title.
+        .filter((l) => l.title.trim() || l.body?.trim())
         .map((l) => ({
           title: l.title.trim(),
           videoUrl: l.videoUrl?.trim() || undefined,
+          body: l.body?.trim() || undefined,
           summary: l.summary?.trim() || undefined,
           links: (l.links ?? [])
             .filter((x) => x.label?.trim())
@@ -62,6 +72,7 @@ export async function saveModuleAction(
   await updateModule(id, {
     title,
     description: payload.description.trim() || null,
+    category: payload.category.trim() || null,
     chapters,
   });
   revalidatePath("/admin/modules");

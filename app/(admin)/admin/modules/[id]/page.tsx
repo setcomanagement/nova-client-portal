@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getGlobalModuleById } from "@/lib/db/queries";
 import type { Chapter } from "@/lib/db/schema";
+import { DEFAULT_MODULE_CATEGORY } from "@/lib/constants";
 import { isUuid } from "@/lib/utils";
 import { CourseBuilder } from "./course-builder";
 
@@ -27,6 +28,7 @@ export default async function ModuleBuilderPage({
         id={mod.id}
         initialTitle={mod.title}
         initialDescription={mod.description ?? ""}
+        initialCategory={mod.category ?? DEFAULT_MODULE_CATEGORY}
         initialChapters={(mod.chapters ?? []) as Chapter[]}
       />
     </div>

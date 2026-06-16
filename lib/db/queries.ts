@@ -470,6 +470,7 @@ export async function getModuleById(id: string): Promise<ModuleRow | null> {
 export async function createModule(input: {
   title: string;
   description?: string | null;
+  category?: string | null;
   chapters?: Chapter[];
 }): Promise<ModuleRow> {
   const existing = await db
@@ -485,6 +486,7 @@ export async function createModule(input: {
       clientId: null,
       title: input.title,
       description: input.description ?? null,
+      category: input.category ?? null,
       chapters: input.chapters ?? [],
       orderIndex: nextOrder,
     })
@@ -492,10 +494,15 @@ export async function createModule(input: {
   return rows[0];
 }
 
-/** Update a module's title/description/chapters. */
+/** Update a module's title/description/category/chapters. */
 export async function updateModule(
   id: string,
-  input: { title?: string; description?: string | null; chapters?: Chapter[] },
+  input: {
+    title?: string;
+    description?: string | null;
+    category?: string | null;
+    chapters?: Chapter[];
+  },
 ): Promise<void> {
   await db.update(modules).set(input).where(eq(modules.id, id));
 }
