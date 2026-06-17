@@ -32,3 +32,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 migrate-modules.sql
+
+# Vercel env pull — contains live secrets, never commit
+.env.vercel.tmp

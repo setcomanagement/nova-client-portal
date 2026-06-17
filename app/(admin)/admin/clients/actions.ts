@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 import { requireAdmin } from "@/lib/auth/session";
+import { createClientSchema as schema } from "@/lib/clients/schema";
 import {
   createClient,
   createInvitedUser,
@@ -15,14 +15,6 @@ import { slugify } from "@/lib/utils";
 import { hashPassword } from "@/lib/auth/password";
 import { buildInviteLink, inviteExpiry, newInviteToken } from "@/lib/invite";
 import { sendInviteEmail } from "@/lib/email";
-
-const schema = z.object({
-  name: z.string().min(2, "Name is too short").max(80),
-  slug: z.string().max(60).optional(),
-  ownerName: z.string().min(2, "Owner name is too short").max(80),
-  ownerEmail: z.string().email("Enter a valid owner email"),
-  notionUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
-});
 
 export interface ClientFormState {
   error?: string;

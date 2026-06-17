@@ -40,6 +40,7 @@ an in-process Postgres (PGlite) persisted to `./.pglite`.
 | -------------- | ------------- | ------------------------------------------------------ |
 | `JWT_SECRET`   | yes           | HS256 signing secret for session cookies               |
 | `DATABASE_URL` | prod / deploy | Neon Postgres connection string. Unset = local PGlite. |
+| `PROVISION_API_KEY` | for `POST /api/clients` | Shared Bearer secret for the external client-provisioning endpoint (Make.com). Unset = endpoint refuses all calls. |
 
 `.env.local` holds these locally (gitignored). A `JWT_SECRET` is generated for
 you on first setup.
