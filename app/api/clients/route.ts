@@ -125,15 +125,21 @@ export async function POST(req: Request) {
       inviteExpiresAt: inviteExpiry(),
     });
     const inviteUrl = await buildInviteLink(inviteToken);
+    // Empty string → treat as not provided so the email skips that section.
+    const discordInviteUrl = parsed.data.discordInviteUrl || null;
+    const clientServerInvite = parsed.data.clientServerInvite || null;
     await sendInviteEmail({
       to: parsed.data.ownerEmail,
       name: parsed.data.ownerName,
       orgName: client.name,
       link: inviteUrl,
+      discordInviteUrl,
+      clientServerInvite,
     });
 
     console.info(
-      `[provision] ${ts} 201 created org=${client.id} owner=${owner.email} ip=${ip}`,
+      `[provision] ${ts} 201 created org=${client.id} owner=${owner.email} ` +
+        `discord=${Boolean(discordInviteUrl)} workspace=${Boolean(clientServerInvite)} ip=${ip}`,
     );
     return NextResponse.json(
       {
