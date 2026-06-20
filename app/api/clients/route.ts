@@ -42,6 +42,21 @@ export async function POST(req: Request) {
   const ip = clientIp(req);
   const ts = new Date().toISOString();
 
+  // TEMP DIAGNOSTIC — remove after debugging the auth mismatch.
+  {
+    const dbgKey = process.env.PROVISION_API_KEY;
+    const dbgAuth = req.headers.get("authorization");
+    const dbgToken =
+      dbgAuth && dbgAuth.startsWith("Bearer ") ? dbgAuth.slice(7) : "";
+    console.log("[CLIENTS_AUTH_DEBUG]", {
+      envKeyPresent: Boolean(dbgKey),
+      envKeyLength: dbgKey ? dbgKey.length : 0,
+      authHeaderPresent: dbgAuth !== null,
+      tokenLength: dbgToken.length,
+      lengthsMatch: Boolean(dbgKey) && dbgKey!.length === dbgToken.length,
+    });
+  }
+
   const expected = process.env.PROVISION_API_KEY;
   if (!expected) {
     // Server is not configured to accept provisioning calls. Don't leak this
