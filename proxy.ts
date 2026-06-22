@@ -20,6 +20,14 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // The MCP connector (/mcp, /sse) is gated by its own OAuth 2.1 bearer auth in
+  // app/[transport]/route.ts. Without this exemption the cookie-session gate
+  // below redirects claude.ai's unauthenticated probe to /login (307), so the
+  // OAuth handshake never starts.
+  if (pathname === "/mcp" || pathname === "/sse") {
+    return NextResponse.next();
+  }
+
   const token = req.cookies.get(COOKIE_NAME)?.value;
   const session = await verifySessionToken(token);
 
