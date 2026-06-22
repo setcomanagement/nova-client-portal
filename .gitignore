@@ -35,3 +35,4 @@ migrate-modules.sql
 
 # Vercel env pull — contains live secrets, never commit
 .env.vercel.tmp
+.env*

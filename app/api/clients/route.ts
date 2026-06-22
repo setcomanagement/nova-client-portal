@@ -1,16 +1,7 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { createClientSchema } from "@/lib/clients/schema";
-import {
-  createClient,
-  createInvitedUser,
-  emailExists,
-  getClientBySlug,
-} from "@/lib/db/queries";
-import { hashPassword } from "@/lib/auth/password";
-import { buildInviteLink, inviteExpiry, newInviteToken } from "@/lib/invite";
-import { sendInviteEmail } from "@/lib/email";
-import { slugify } from "@/lib/utils";
+import { ProvisionError, provisionClient } from "@/lib/clients/provision";
 
 export const runtime = "nodejs";
 
@@ -78,80 +69,39 @@ export async function POST(req: Request) {
       );
     }
 
-    const slug = slugify(parsed.data.slug || parsed.data.name);
-    if (!slug) {
-      console.warn(`[provision] ${ts} 400 empty slug ip=${ip}`);
-      return NextResponse.json(
-        {
-          error: "validation_error",
-          details: [{ message: "Could not derive a slug from that name." }],
-        },
-        { status: 400 },
-      );
-    }
-
-    if (await getClientBySlug(slug)) {
-      console.warn(`[provision] ${ts} 409 duplicate slug=${slug} ip=${ip}`);
-      return NextResponse.json(
-        { error: "duplicate", field: "slug" },
-        { status: 409 },
-      );
-    }
-    if (await emailExists(parsed.data.ownerEmail)) {
+    const result = await provisionClient(parsed.data);
+    console.info(
+      `[provision] ${ts} 201 created org=${result.organizationId} owner=${result.ownerEmail} ` +
+        `discord=${Boolean(parsed.data.discordInviteUrl)} workspace=${Boolean(parsed.data.clientServerInvite)} ip=${ip}`,
+    );
+    return NextResponse.json(result, { status: 201 });
+  } catch (err) {
+    if (err instanceof ProvisionError) {
+      if (err.code === "empty_slug") {
+        console.warn(`[provision] ${ts} 400 empty slug ip=${ip}`);
+        return NextResponse.json(
+          {
+            error: "validation_error",
+            details: [{ message: "Could not derive a slug from that name." }],
+          },
+          { status: 400 },
+        );
+      }
+      if (err.code === "duplicate_slug") {
+        console.warn(`[provision] ${ts} 409 duplicate slug=${err.slug} ip=${ip}`);
+        return NextResponse.json(
+          { error: "duplicate", field: "slug" },
+          { status: 409 },
+        );
+      }
       console.warn(
-        `[provision] ${ts} 409 duplicate email=${parsed.data.ownerEmail} ip=${ip}`,
+        `[provision] ${ts} 409 duplicate email=${err.email} ip=${ip}`,
       );
       return NextResponse.json(
         { error: "duplicate", field: "email" },
         { status: 409 },
       );
     }
-
-    const client = await createClient({
-      name: parsed.data.name,
-      slug,
-      notionUrl: parsed.data.notionUrl ? parsed.data.notionUrl : null,
-    });
-
-    // Owner login is an email invite — they set their own password.
-    const inviteToken = newInviteToken();
-    const owner = await createInvitedUser({
-      email: parsed.data.ownerEmail,
-      name: parsed.data.ownerName,
-      role: "client",
-      clientId: client.id,
-      passwordHash: await hashPassword(newInviteToken()),
-      inviteToken,
-      inviteExpiresAt: inviteExpiry(),
-    });
-    const inviteUrl = await buildInviteLink(inviteToken);
-    // Empty string → treat as not provided so the email skips that section.
-    const discordInviteUrl = parsed.data.discordInviteUrl || null;
-    const clientServerInvite = parsed.data.clientServerInvite || null;
-    await sendInviteEmail({
-      to: parsed.data.ownerEmail,
-      name: parsed.data.ownerName,
-      orgName: client.name,
-      link: inviteUrl,
-      discordInviteUrl,
-      clientServerInvite,
-    });
-
-    console.info(
-      `[provision] ${ts} 201 created org=${client.id} owner=${owner.email} ` +
-        `discord=${Boolean(discordInviteUrl)} workspace=${Boolean(clientServerInvite)} ip=${ip}`,
-    );
-    return NextResponse.json(
-      {
-        organizationId: client.id,
-        organizationSlug: client.slug,
-        ownerProfileId: owner.id,
-        ownerEmail: owner.email,
-        inviteUrl,
-      },
-      { status: 201 },
-    );
-  } catch (err) {
     console.error(`[provision] ${ts} 500 internal ip=${ip}`, err);
     return NextResponse.json({ error: "internal" }, { status: 500 });
   }
