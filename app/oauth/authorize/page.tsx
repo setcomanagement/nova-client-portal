@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { AuthorizeClient } from "./authorize-client";
@@ -34,15 +33,10 @@ export default async function OAuthAuthorizePage({
     redirect(`/login?next=${encodeURIComponent(returnTo)}`);
   }
 
-  const h = await headers();
-  const host = h.get("host") ?? "";
-  const proto = h.get("x-forwarded-proto") ?? "https";
-  const appUrl = `${proto}://${host}`;
-
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm">
-        <AuthorizeClient appUrl={appUrl} />
+        <AuthorizeClient />
       </div>
     </div>
   );
