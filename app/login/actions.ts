@@ -11,6 +11,16 @@ const schema = z.object({
   password: z.string().min(1),
 });
 
+/**
+ * Only honor same-origin relative paths for the post-login return ("/oauth/authorize?…").
+ * Reject absolute URLs and protocol-relative "//evil.com" to avoid an open redirect.
+ */
+function safeNext(value: FormDataEntryValue | null): string | null {
+  if (typeof value !== "string") return null;
+  if (!value.startsWith("/") || value.startsWith("//")) return null;
+  return value;
+}
+
 export interface LoginState {
   error?: string;
 }
@@ -53,5 +63,8 @@ export async function login(
     mustChange: user.mustChangePassword,
   });
 
-  redirect(user.mustChangePassword ? "/change-password" : "/home");
+  if (user.mustChangePassword) {
+    redirect("/change-password");
+  }
+  redirect(safeNext(formData.get("next")) ?? "/home");
 }

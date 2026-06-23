@@ -28,6 +28,13 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // The Connected Apps consent page enforces its own auth (NOVA admin session +
+  // Stytch login) inside the route, and must preserve the inbound OAuth params,
+  // so it opts out of the blanket cookie-session redirect here.
+  if (pathname === "/oauth/authorize") {
+    return NextResponse.next();
+  }
+
   const token = req.cookies.get(COOKIE_NAME)?.value;
   const session = await verifySessionToken(token);
 

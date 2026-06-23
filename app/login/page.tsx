@@ -7,7 +7,12 @@ import {
 } from "@/components/ui/card";
 import { LoginForm } from "./login-form";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
   return (
     <div className="flex min-h-screen flex-1 items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm">
@@ -26,7 +31,7 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <LoginForm />
+            <LoginForm next={next} />
           </CardContent>
         </Card>
         <p className="mt-5 text-center text-xs text-muted-foreground">

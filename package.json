@@ -16,6 +16,8 @@
     "@electric-sql/pglite": "^0.4.6",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@radix-ui/react-dialog": "^1.1.15",
+    "@stytch/react": "^20.0.9",
+    "@stytch/vanilla-js": "^6.0.9",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
