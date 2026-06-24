@@ -69,10 +69,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = await provisionClient(parsed.data);
+    // Optional ?skip_email=true suppresses the owner invite email (e.g. when
+    // Make.com sends its own). Defensive: only the literal "true" disables it;
+    // absent / "false" / "1" / anything else keeps the default of sending.
+    const skipEmail =
+      new URL(req.url).searchParams.get("skip_email") === "true";
+
+    const result = await provisionClient(parsed.data, { skipEmail });
     console.info(
       `[provision] ${ts} 201 created org=${result.organizationId} owner=${result.ownerEmail} ` +
-        `discord=${Boolean(parsed.data.discordInviteUrl)} workspace=${Boolean(parsed.data.clientServerInvite)} ip=${ip}`,
+        `discord=${Boolean(parsed.data.discordInviteUrl)} workspace=${Boolean(parsed.data.clientServerInvite)} ` +
+        `skip_email=${skipEmail} ip=${ip}`,
     );
     return NextResponse.json(result, { status: 201 });
   } catch (err) {

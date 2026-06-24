@@ -47,8 +47,18 @@ export interface ProvisionResult {
   inviteUrl: string;
 }
 
+export interface ProvisionOptions {
+  /**
+   * When true, skip sending the owner invite email. The org + owner are still
+   * created identically (and inviteUrl is still returned); only the Resend send
+   * is suppressed — e.g. when an external system like Make.com sends its own.
+   */
+  skipEmail?: boolean;
+}
+
 export async function provisionClient(
   data: CreateClientInput,
+  options: ProvisionOptions = {},
 ): Promise<ProvisionResult> {
   const slug = slugify(data.slug || data.name);
   if (!slug) throw new ProvisionError("empty_slug");
@@ -77,15 +87,17 @@ export async function provisionClient(
   });
 
   const inviteUrl = await buildInviteLink(inviteToken);
-  // Empty string → treat as not provided so the email skips that section.
-  await sendInviteEmail({
-    to: data.ownerEmail,
-    name: data.ownerName,
-    orgName: client.name,
-    link: inviteUrl,
-    discordInviteUrl: data.discordInviteUrl || null,
-    clientServerInvite: data.clientServerInvite || null,
-  });
+  if (!options.skipEmail) {
+    // Empty string → treat as not provided so the email skips that section.
+    await sendInviteEmail({
+      to: data.ownerEmail,
+      name: data.ownerName,
+      orgName: client.name,
+      link: inviteUrl,
+      discordInviteUrl: data.discordInviteUrl || null,
+      clientServerInvite: data.clientServerInvite || null,
+    });
+  }
 
   return {
     organizationId: client.id,
