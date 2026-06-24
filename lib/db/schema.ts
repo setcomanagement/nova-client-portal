@@ -37,6 +37,12 @@ export const clients = pgTable("clients", {
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   brandColor: text("brand_color").notNull().default("#A0703C"),
+  // What the client pays their appointment setter, as a fraction of cash
+  // collected (0.05 = 5%). Drives "Commission" / "Total Commissions" on the
+  // statistics page. Per-client, editable by client/manager/admin.
+  commissionPct: numeric("commission_pct", { precision: 5, scale: 4 })
+    .notNull()
+    .default("0.05"),
   notionUrl: text("notion_url"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

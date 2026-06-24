@@ -1,0 +1,1 @@
+ALTER TABLE "clients" ADD COLUMN "commission_pct" numeric(5, 4) DEFAULT '0.05' NOT NULL;

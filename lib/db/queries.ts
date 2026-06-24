@@ -1,5 +1,6 @@
 import "server-only";
 import { and, asc, desc, eq, gte, sql } from "drizzle-orm";
+import type { AnyColumn } from "drizzle-orm";
 import { db } from "./index";
 import {
   announcements,
@@ -216,6 +217,72 @@ export async function listSetterWeekKpis(
     .groupBy(eodSubmissions.setterUserId, users.name)
     .orderBy(desc(sql`coalesce(sum(${eodSubmissions.cashCollected}), 0)`));
   return rows;
+}
+
+/**
+ * Per-day KPI aggregates for one client, summed across that client's setters,
+ * for every day on/after `since` (YYYY-MM-DD). eod_submissions has no client_id,
+ * so we resolve the owning client through the setter's users row. One row per
+ * day that has any EOD — powers the statistics page's scorecards, trend charts,
+ * and funnel. `submissions` is the count of EOD rows that day (the divisor for
+ * per-setter-day averages).
+ */
+export interface DailyKpi {
+  date: string;
+  submissions: number;
+  outbound: number;
+  inbound: number;
+  followUps: number;
+  totalConvos: number;
+  callsPitched: number;
+  callsBooked: number;
+  qualifiedBooked: number;
+  showUps: number;
+  closes: number;
+  cashCollected: number;
+}
+export async function listClientDailyKpis(
+  clientId: string,
+  since: string,
+): Promise<DailyKpi[]> {
+  const sum = (col: AnyColumn) => sql<number>`coalesce(sum(${col}), 0)::int`;
+  const rows = await db
+    .select({
+      date: eodSubmissions.submissionDate,
+      submissions: sql<number>`count(*)::int`,
+      outbound: sum(eodSubmissions.outbound),
+      inbound: sum(eodSubmissions.inbound),
+      followUps: sum(eodSubmissions.followUps),
+      totalConvos: sum(eodSubmissions.totalConvos),
+      callsPitched: sum(eodSubmissions.callsPitched),
+      callsBooked: sum(eodSubmissions.callsBooked),
+      qualifiedBooked: sum(eodSubmissions.qualifiedBooked),
+      showUps: sum(eodSubmissions.showUps),
+      closes: sum(eodSubmissions.closes),
+      cashCollected: sql<number>`coalesce(sum(${eodSubmissions.cashCollected}), 0)::float`,
+    })
+    .from(eodSubmissions)
+    .innerJoin(users, eq(users.id, eodSubmissions.setterUserId))
+    .where(
+      and(
+        eq(users.clientId, clientId),
+        gte(eodSubmissions.submissionDate, since),
+      ),
+    )
+    .groupBy(eodSubmissions.submissionDate)
+    .orderBy(asc(eodSubmissions.submissionDate));
+  return rows;
+}
+
+/** Set a client's appointment-setter commission rate (fraction, e.g. 0.05). */
+export async function setClientCommissionPct(
+  clientId: string,
+  pct: number,
+): Promise<void> {
+  await db
+    .update(clients)
+    .set({ commissionPct: pct.toString() })
+    .where(eq(clients.id, clientId));
 }
 
 /** Most recent weekly KPI row for a client (targets + actuals). */

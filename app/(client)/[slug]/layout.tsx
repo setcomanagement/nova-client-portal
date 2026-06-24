@@ -23,6 +23,7 @@ function navForRole(role: UserRole, slug: string): NavItem[] {
   if (role === "client" || role === "manager" || role === "sales_rep" || isOps) {
     nav.push({ href: `/${slug}/calendar`, label: "Calendar" });
     nav.push({ href: `/${slug}/milestones`, label: "Milestones" });
+    nav.push({ href: `/${slug}/statistics`, label: "Statistics" });
     nav.push({ href: `/${slug}/leads`, label: "Leads" });
   }
   // Recaps + Modules + Integrations: client-only (and ops viewing)

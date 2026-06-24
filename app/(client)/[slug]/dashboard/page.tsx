@@ -245,9 +245,14 @@ export default async function ClientDashboard({
           <p className="mt-3 text-[13px] text-muted-foreground">
             {booked} of {bookedTarget} calls booked
           </p>
-          <Link href={`/${slug}/milestones`} className="mt-3 text-sm font-medium text-accent hover:underline">
-            Milestone tracker →
-          </Link>
+          <div className="mt-3 flex items-center gap-4">
+            <Link href={`/${slug}/milestones`} className="text-sm font-medium text-accent hover:underline">
+              Milestone tracker →
+            </Link>
+            <Link href={`/${slug}/statistics`} className="text-sm font-medium text-accent hover:underline">
+              Statistics →
+            </Link>
+          </div>
         </Card>
       </div>
 
