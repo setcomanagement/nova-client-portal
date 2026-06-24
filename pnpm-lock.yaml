@@ -11,18 +11,9 @@ importers:
       '@electric-sql/pglite':
         specifier: ^0.4.6
         version: 0.4.6
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.26.0
-        version: 1.26.0(zod@4.4.3)
       '@radix-ui/react-dialog':
         specifier: ^1.1.15
         version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@stytch/react':
-        specifier: ^20.0.9
-        version: 20.0.9(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@stytch/vanilla-js':
-        specifier: ^6.0.9
-        version: 6.0.9
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -1191,15 +1182,6 @@ packages:
 
   '@standard-schema/utils@0.3.0':
     resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
-
-  '@stytch/react@20.0.9':
-    resolution: {integrity: sha512-xR7fCxjltYsQPrk5cAcHU+R4wDm+gssGcYsIRadSkfV0mC2U24oaNCzG9Yk2P84r5tGAXvvA47y/rMrJo7HSPg==}
-    peerDependencies:
-      react: '>= 17.0.2'
-      react-dom: '>= 17.0.2'
-
-  '@stytch/vanilla-js@6.0.9':
-    resolution: {integrity: sha512-T5rca5csCMh80D2RtpJ76bVabg3obnDb35rygfAbkSL6dnrYI5UKImVZSo3HMy7L0/w7jWIM6VzJWbHeAwqnjg==}
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -4464,13 +4446,6 @@ snapshots:
   '@standard-schema/spec@1.1.0': {}
 
   '@standard-schema/utils@0.3.0': {}
-
-  '@stytch/react@20.0.9(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
-
-  '@stytch/vanilla-js@6.0.9': {}
 
   '@swc/helpers@0.5.15':
     dependencies:
