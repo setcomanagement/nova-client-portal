@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { getSession } from "@/lib/auth/session";
+import { requireSession } from "@/lib/auth/session";
 import {
-  getClientBySlug,
   getLeadForClient,
   listBookingsForLead,
   listClientMembers,
+  resolveClientAccess,
 } from "@/lib/db/queries";
 import type { BookingOutcome } from "@/lib/db/schema";
 import { isUuid } from "@/lib/utils";
@@ -22,12 +22,12 @@ export default async function LeadDetail({
 }) {
   const { slug, id } = await params;
   if (!isUuid(id)) notFound();
-  const client = await getClientBySlug(slug);
+  const session = await requireSession();
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
   const lead = await getLeadForClient(id, client.id);
   if (!lead) notFound();
-  const session = await getSession();
-  const canEdit = session ? EDITOR_ROLES.includes(session.role) : false;
+  const canEdit = EDITOR_ROLES.includes(session.role);
   const [bookings, members] = await Promise.all([
     listBookingsForLead(lead.id, client.id),
     canEdit ? listClientMembers(client.id) : Promise.resolve([]),

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { requireSession } from "@/lib/auth/session";
-import { getClientBySlug, listClientMembers } from "@/lib/db/queries";
+import { listClientMembers, resolveClientAccess } from "@/lib/db/queries";
 import { LeadForm } from "../lead-form";
 
 const EDITOR_ROLES = ["client", "manager", "admin", "super_admin"];
@@ -15,7 +15,7 @@ export default async function NewLeadPage({
   const { slug } = await params;
   const session = await requireSession();
   if (!EDITOR_ROLES.includes(session.role)) notFound();
-  const client = await getClientBySlug(slug);
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
   const members = await listClientMembers(client.id);
 

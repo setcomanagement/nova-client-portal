@@ -8,12 +8,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getSession } from "@/lib/auth/session";
+import { requireSession } from "@/lib/auth/session";
 import {
-  getClientBySlug,
   getUserById,
   listClientMembers,
   listIntegrations,
+  resolveClientAccess,
 } from "@/lib/db/queries";
 import type { UserRole } from "@/lib/auth/jwt";
 import { ProfileForm } from "./profile-form";
@@ -39,10 +39,9 @@ export default async function SettingsPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const client = await getClientBySlug(slug);
+  const session = await requireSession();
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
-  const session = await getSession();
-  if (!session) notFound();
   const [user, members, integrations] = await Promise.all([
     getUserById(session.userId),
     listClientMembers(client.id),

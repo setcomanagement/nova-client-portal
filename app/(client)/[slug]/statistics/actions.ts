@@ -99,6 +99,12 @@ export async function addStatsEntryAction(
     cashCollected: money("cashCollected"),
     accuracyConfirmed: true,
   });
+  // An added entry is an EOD row — refresh every surface that rolls them up,
+  // not just the statistics page it was entered from.
   revalidatePath(`/${slug}/statistics`);
+  revalidatePath(`/${slug}/dashboard`);
+  revalidatePath(`/${slug}/milestones`);
+  revalidatePath(`/${slug}/rep`);
+  revalidatePath("/admin/funnel");
   return { ok: true };
 }

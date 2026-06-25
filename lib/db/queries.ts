@@ -282,6 +282,74 @@ export async function listClientDailyKpis(
   return rows;
 }
 
+/**
+ * Most recent EOD submission_date for a client (across its setters), or null
+ * when the client has no EODs at all. Lets the dashboard fall back to the last
+ * week that actually has activity instead of showing zeroes for an empty week.
+ */
+export async function getLatestEodDate(clientId: string): Promise<string | null> {
+  const rows = await db
+    .select({ date: eodSubmissions.submissionDate })
+    .from(eodSubmissions)
+    .innerJoin(users, eq(users.id, eodSubmissions.setterUserId))
+    .where(eq(users.clientId, clientId))
+    .orderBy(desc(eodSubmissions.submissionDate))
+    .limit(1);
+  return rows[0]?.date ?? null;
+}
+
+/**
+ * Every individual EOD submission for a client on/after `since` (YYYY-MM-DD),
+ * newest first, with the submitting setter's name. Optionally scoped to a single
+ * setter (sales-rep segregation, same as the aggregate view). Unlike
+ * listClientDailyKpis (which collapses a day's submissions into one row), this
+ * returns one row per submission so the statistics page can list every entry.
+ */
+export interface ClientEodEntry {
+  id: string;
+  date: string;
+  setterUserId: string;
+  setterName: string;
+  outbound: number;
+  totalConvos: number;
+  callsPitched: number;
+  callsBooked: number;
+  showUps: number;
+  closes: number;
+  cashCollected: number;
+}
+export async function listClientEodEntries(
+  clientId: string,
+  since: string,
+  setterUserId?: string,
+): Promise<ClientEodEntry[]> {
+  const rows = await db
+    .select({
+      id: eodSubmissions.id,
+      date: eodSubmissions.submissionDate,
+      setterUserId: eodSubmissions.setterUserId,
+      setterName: users.name,
+      outbound: eodSubmissions.outbound,
+      totalConvos: eodSubmissions.totalConvos,
+      callsPitched: eodSubmissions.callsPitched,
+      callsBooked: eodSubmissions.callsBooked,
+      showUps: eodSubmissions.showUps,
+      closes: eodSubmissions.closes,
+      cashCollected: sql<number>`${eodSubmissions.cashCollected}::float`,
+    })
+    .from(eodSubmissions)
+    .innerJoin(users, eq(users.id, eodSubmissions.setterUserId))
+    .where(
+      and(
+        eq(users.clientId, clientId),
+        gte(eodSubmissions.submissionDate, since),
+        setterUserId ? eq(eodSubmissions.setterUserId, setterUserId) : undefined,
+      ),
+    )
+    .orderBy(desc(eodSubmissions.submissionDate), asc(users.name));
+  return rows;
+}
+
 /** Set a client's appointment-setter commission rate (fraction, e.g. 0.05). */
 export async function setClientCommissionPct(
   clientId: string,

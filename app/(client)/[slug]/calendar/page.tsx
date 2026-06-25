@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { getSession } from "@/lib/auth/session";
-import { getClientBySlug, getUserById, listBookings, listLeads } from "@/lib/db/queries";
+import { requireSession } from "@/lib/auth/session";
+import { getUserById, listBookings, listLeads, resolveClientAccess } from "@/lib/db/queries";
 
 const STATUS: Record<string, { cls: string; label: string }> = {
   scheduled: { cls: "badge-up", label: "Scheduled" },
@@ -33,9 +33,9 @@ export default async function CalendarPage({
 }) {
   const { slug } = await params;
   const { ym } = await searchParams;
-  const client = await getClientBySlug(slug);
+  const session = await requireSession();
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
-  const session = await getSession();
   const user = session ? await getUserById(session.userId) : null;
   const tz = user?.timezone || "America/New_York";
 

@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Ring } from "@/components/ui/ring";
 import { buttonVariants } from "@/components/ui/button";
-import { getSession } from "@/lib/auth/session";
-import { getClientBySlug, getUserById, listEodForUser } from "@/lib/db/queries";
+import { requireSession } from "@/lib/auth/session";
+import { getUserById, listEodForUser, resolveClientAccess } from "@/lib/db/queries";
 
 function money(v: number): string {
   return v >= 1000 ? `$${(v / 1000).toFixed(v % 1000 === 0 ? 0 : 1)}k` : `$${v}`;
@@ -22,11 +22,11 @@ export default async function RepHome({
 }) {
   const { slug } = await params;
   const { logged } = await searchParams;
-  const client = await getClientBySlug(slug);
+  const session = await requireSession();
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
-  const session = await getSession();
-  const user = session ? await getUserById(session.userId) : null;
-  const rows = session ? await listEodForUser(session.userId) : [];
+  const user = await getUserById(session.userId);
+  const rows = await listEodForUser(session.userId);
 
   // "This week" = within 6 days of the most recent EOD; "month" = same year-month.
   const latest = rows[0]?.submissionDate ?? null;

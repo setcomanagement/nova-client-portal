@@ -4,8 +4,8 @@ import { Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { requireClientContentAccess } from "@/lib/auth/session";
 import {
-  getClientBySlug,
   getRecapForClient,
+  resolveClientAccess,
   type ActionItem,
 } from "@/lib/db/queries";
 import { isUuid } from "@/lib/utils";
@@ -17,9 +17,9 @@ export default async function RecapDetail({
   params: Promise<{ slug: string; id: string }>;
 }) {
   const { slug, id } = await params;
-  await requireClientContentAccess();
+  const session = await requireClientContentAccess();
   if (!isUuid(id)) notFound();
-  const client = await getClientBySlug(slug);
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
   const recap = await getRecapForClient(id, client.id);
   if (!recap) notFound();

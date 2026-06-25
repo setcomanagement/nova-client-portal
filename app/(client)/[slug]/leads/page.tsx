@@ -9,8 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getSession } from "@/lib/auth/session";
-import { getClientBySlug, listBookings, listLeads } from "@/lib/db/queries";
+import { requireSession } from "@/lib/auth/session";
+import { listBookings, listLeads, resolveClientAccess } from "@/lib/db/queries";
 
 const EDITOR_ROLES = ["client", "manager", "admin", "super_admin"];
 
@@ -28,10 +28,10 @@ export default async function LeadsPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const client = await getClientBySlug(slug);
+  const session = await requireSession();
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
-  const session = await getSession();
-  const canEdit = session ? EDITOR_ROLES.includes(session.role) : false;
+  const canEdit = EDITOR_ROLES.includes(session.role);
   const [leads, bookings] = await Promise.all([
     listLeads(client.id),
     listBookings(client.id),

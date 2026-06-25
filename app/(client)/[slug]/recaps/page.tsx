@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { requireClientContentAccess } from "@/lib/auth/session";
 import {
-  getClientBySlug,
   listRecaps,
+  resolveClientAccess,
   type ActionItem,
 } from "@/lib/db/queries";
 
@@ -14,8 +14,8 @@ export default async function RecapsPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  await requireClientContentAccess();
-  const client = await getClientBySlug(slug);
+  const session = await requireClientContentAccess();
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
   const recaps = await listRecaps(client.id);
 

@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
+import { requireSession } from "@/lib/auth/session";
 import {
   getBookingForClient,
-  getClientBySlug,
   getLeadForClient,
+  resolveClientAccess,
 } from "@/lib/db/queries";
 import type { BookingOutcome, CalendlyAnswer } from "@/lib/db/schema";
 import { isUuid } from "@/lib/utils";
@@ -18,7 +19,8 @@ export default async function BookingDetail({
 }) {
   const { slug, id } = await params;
   if (!isUuid(id)) notFound();
-  const client = await getClientBySlug(slug);
+  const session = await requireSession();
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
   const booking = await getBookingForClient(id, client.id);
   if (!booking) notFound();

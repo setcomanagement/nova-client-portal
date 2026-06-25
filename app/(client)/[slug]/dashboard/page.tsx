@@ -2,11 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Ring } from "@/components/ui/ring";
-import { getSession } from "@/lib/auth/session";
+import { requireSession } from "@/lib/auth/session";
 import {
   countMembersByRole,
-  getClientBySlug,
   getCompletedModuleIds,
+  getLatestEodDate,
   getLatestKpi,
   listBookings,
   listGlobalModules,
@@ -14,6 +14,7 @@ import {
   listLeads,
   listRecaps,
   listSetterWeekKpis,
+  resolveClientAccess,
 } from "@/lib/db/queries";
 import type { ActionItem } from "@/lib/db/queries";
 import { weekLabel, weekStartISO } from "@/lib/week";
@@ -44,9 +45,10 @@ export default async function ClientDashboard({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const client = await getClientBySlug(slug);
+  const session = await requireSession();
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
-  const session = await getSession();
+  const currentWeekStart = weekStartISO();
 
   const [kpi, recaps, modules, bookings, leads, integrations, completedIds, reps, managers, setterRows] =
     await Promise.all([
@@ -59,15 +61,36 @@ export default async function ClientDashboard({
       session ? getCompletedModuleIds(session.userId) : Promise.resolve(new Set<string>()),
       countMembersByRole(client.id, "sales_rep"),
       countMembersByRole(client.id, "manager"),
-      listSetterWeekKpis(client.id, weekStartISO()),
+      listSetterWeekKpis(client.id, currentWeekStart),
     ]);
   // Agenda shows the person's name, not the event title.
   const personName = (b: (typeof bookings)[number]) =>
     b.inviteeName || leads.find((l) => l.id === b.leadId)?.name || b.callType || "Call";
 
+  // The ledger + weekly ring show the current Mon–Sun week. If nothing has been
+  // logged yet this week (common early in the week, or when a manager backfills
+  // stats to past dates via the statistics page), fall back to the most recent
+  // week that has activity, so the dashboard reflects real numbers instead of an
+  // all-zero state.
+  let weekRows = setterRows;
+  let kpiWeekStart = currentWeekStart;
+  let usingLatestWeek = false;
+  if (weekRows.length === 0) {
+    const latestEod = await getLatestEodDate(client.id);
+    if (latestEod) {
+      const latestWeekStart = weekStartISO(new Date(`${latestEod}T00:00:00Z`));
+      if (latestWeekStart !== currentWeekStart) {
+        weekRows = await listSetterWeekKpis(client.id, latestWeekStart);
+        kpiWeekStart = latestWeekStart;
+        usingLatestWeek = true;
+      }
+    }
+  }
+  const displayWeekLabel = weekLabel(new Date(`${kpiWeekStart}T00:00:00Z`));
+
   // Live weekly actuals summed from the team's EOD submissions (kpi_weekly only
   // stores targets; actuals are derived so the ledger actually fills up).
-  const a: Record<string, number> = setterRows.reduce(
+  const a: Record<string, number> = weekRows.reduce(
     (acc, r) => ({
       callsBooked: acc.callsBooked + r.callsBooked,
       showUps: acc.showUps + r.showUps,
@@ -161,11 +184,13 @@ export default async function ClientDashboard({
       <header className="border-b-2 border-ink pb-6">
         <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           <span>The {client.name} Briefing</span>
-          <span>{weekLabel()}</span>
+          <span>{displayWeekLabel}{usingLatestWeek ? " · most recent activity" : ""}</span>
         </div>
         <h1 className="mt-4 text-5xl font-semibold">Welcome back, {client.name}.</h1>
         <p className="mt-2 max-w-xl font-serif text-lg text-[color:var(--ink)]/80">
-          {onPace
+          {usingLatestWeek
+            ? "Nothing logged yet this week — showing your most recent week of activity."
+            : onPace
             ? "You're on pace this week — here's where every number stands."
             : "Here's where your numbers stand this week."}
         </p>

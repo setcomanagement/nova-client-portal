@@ -1,11 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { getSession } from "@/lib/auth/session";
 import {
-  getClientBySlug,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { requireSession } from "@/lib/auth/session";
+import {
   listClientDailyKpis,
+  listClientEodEntries,
   listClientMembers,
+  resolveClientAccess,
   type DailyKpi,
 } from "@/lib/db/queries";
 import { StatisticsCharts, type TrendPoint } from "./statistics-charts";
@@ -46,6 +55,14 @@ function pct(num: number, den: number): string {
 function avg(total: number, den: number): string {
   return den ? (total / den).toFixed(2) : "0";
 }
+function fmtDate(iso: string): string {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
 
 export default async function StatisticsPage({
   params,
@@ -56,24 +73,29 @@ export default async function StatisticsPage({
 }) {
   const { slug } = await params;
   const { range: rangeParam } = await searchParams;
-  const client = await getClientBySlug(slug);
+  const session = await requireSession();
+  const client = await resolveClientAccess({
+    slug,
+    role: session.role,
+    clientId: session.clientId,
+  });
   if (!client) notFound();
 
   const range: RangeKey =
     (RANGES.find((r) => r.key === rangeParam)?.key as RangeKey) ?? "90";
   const days = RANGES.find((r) => r.key === range)!.days;
 
-  const session = await getSession();
   // Segregation: a sales rep sees ONLY their own numbers; client/manager/ops
   // see every setter's numbers combined.
-  const isRep = session?.role === "sales_rep";
-  const canManage =
-    session != null &&
-    ["client", "manager", "admin", "super_admin"].includes(session.role);
-  const scopedSetter = isRep ? session!.userId : undefined;
+  const isRep = session.role === "sales_rep";
+  const canManage = ["client", "manager", "admin", "super_admin"].includes(
+    session.role,
+  );
+  const scopedSetter = isRep ? session.userId : undefined;
 
-  const [daily, members] = await Promise.all([
+  const [daily, entries, members] = await Promise.all([
     listClientDailyKpis(client.id, sinceISO(days), scopedSetter),
+    listClientEodEntries(client.id, sinceISO(days), scopedSetter),
     canManage ? listClientMembers(client.id) : Promise.resolve([]),
   ]);
 
@@ -256,6 +278,56 @@ export default async function StatisticsPage({
             </Card>
           ))}
         </div>
+      </section>
+
+      {/* Every individual EOD entry in range */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between">
+          <h2 className="font-serif text-2xl font-semibold">
+            {isRep ? "Your entries" : "Every entry"}
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            {entries.length} {entries.length === 1 ? "entry" : "entries"} in range
+          </span>
+        </div>
+        <Card className="overflow-hidden p-0">
+          {entries.length === 0 ? (
+            <p className="p-6 text-sm text-muted-foreground">
+              No EOD submissions in this range yet.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  {!isRep && <TableHead>Setter</TableHead>}
+                  <TableHead className="text-right">Convos</TableHead>
+                  <TableHead className="text-right">Pitched</TableHead>
+                  <TableHead className="text-right">Booked</TableHead>
+                  <TableHead className="text-right">Showed</TableHead>
+                  <TableHead className="text-right">Closed</TableHead>
+                  <TableHead className="text-right">Cash</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {entries.map((e) => (
+                  <TableRow key={e.id}>
+                    <TableCell className="whitespace-nowrap font-medium">
+                      {fmtDate(e.date)}
+                    </TableCell>
+                    {!isRep && <TableCell>{e.setterName}</TableCell>}
+                    <TableCell className="text-right tabular-nums">{commas(e.totalConvos)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{commas(e.callsPitched)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{commas(e.callsBooked)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{commas(e.showUps)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{commas(e.closes)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{money(e.cashCollected)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Card>
       </section>
 
       {/* Add to statistics (managerial) */}

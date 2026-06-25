@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireIntegrationsAccess } from "@/lib/auth/session";
-import { getClientBySlug, listBookings, listIntegrations } from "@/lib/db/queries";
+import { listBookings, listIntegrations, resolveClientAccess } from "@/lib/db/queries";
 import type { IntegrationStatus } from "@/lib/db/schema";
 import { calendlyConfigured } from "@/lib/calendly";
 import { IntegrationCard, type ProviderMeta } from "./integration-card";
@@ -38,8 +38,8 @@ export default async function IntegrationsPage({
 }) {
   const { slug } = await params;
   const { calendly: notice } = await searchParams;
-  await requireIntegrationsAccess();
-  const client = await getClientBySlug(slug);
+  const session = await requireIntegrationsAccess();
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
   const [rows, bookings] = await Promise.all([
     listIntegrations(client.id),

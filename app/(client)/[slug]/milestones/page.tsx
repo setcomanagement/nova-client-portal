@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Ring } from "@/components/ui/ring";
-import { getSession } from "@/lib/auth/session";
-import { getClientBySlug, getLatestKpi, listSetterWeekKpis } from "@/lib/db/queries";
+import { requireSession } from "@/lib/auth/session";
+import { getLatestKpi, listSetterWeekKpis, resolveClientAccess } from "@/lib/db/queries";
 import { weekLabel, weekStartISO } from "@/lib/week";
 import { SetMilestonesForm } from "./set-milestones-form";
 
@@ -23,12 +23,12 @@ export default async function MilestonesPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const client = await getClientBySlug(slug);
+  const session = await requireSession();
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
   const weekStart = weekStartISO();
-  const [kpi, session, setterRows] = await Promise.all([
+  const [kpi, setterRows] = await Promise.all([
     getLatestKpi(client.id),
-    getSession(),
     listSetterWeekKpis(client.id, weekStart),
   ]);
 

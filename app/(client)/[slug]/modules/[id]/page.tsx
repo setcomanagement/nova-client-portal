@@ -2,9 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireClientContentAccess } from "@/lib/auth/session";
 import {
-  getClientBySlug,
   getCompletedModuleIds,
   getGlobalModuleById,
+  resolveClientAccess,
 } from "@/lib/db/queries";
 import type { Chapter } from "@/lib/db/schema";
 import { isUuid } from "@/lib/utils";
@@ -18,7 +18,7 @@ export default async function ModuleDetail({
   const { slug, id } = await params;
   const session = await requireClientContentAccess();
   if (!isUuid(id)) notFound();
-  const client = await getClientBySlug(slug);
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
   const mod = await getGlobalModuleById(id);
   if (!mod) notFound();

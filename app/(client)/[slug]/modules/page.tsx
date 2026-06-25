@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { requireClientContentAccess } from "@/lib/auth/session";
 import {
-  getClientBySlug,
   getCompletedModuleIds,
   listGlobalModules,
+  resolveClientAccess,
   type ModuleRow,
 } from "@/lib/db/queries";
 import type { Chapter } from "@/lib/db/schema";
@@ -75,7 +75,7 @@ export default async function ModulesPage({
 }) {
   const { slug } = await params;
   const session = await requireClientContentAccess();
-  const client = await getClientBySlug(slug);
+  const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
   const [mods, completed] = await Promise.all([
     listGlobalModules(),

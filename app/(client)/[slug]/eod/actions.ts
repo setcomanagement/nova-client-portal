@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/auth/session";
 import { insertEod } from "@/lib/db/queries";
 
@@ -42,6 +43,14 @@ export async function submitEod(slug: string, formData: FormData): Promise<void>
     managerRequest: s("managerRequest"),
     accuracyConfirmed: formData.get("accuracyConfirmed") === "on",
   });
+
+  // The EOD feeds every rolled-up surface — refresh them all so the new numbers
+  // register live on the next navigation, not just after a hard reload.
+  revalidatePath(`/${slug}/rep`);
+  revalidatePath(`/${slug}/dashboard`);
+  revalidatePath(`/${slug}/milestones`);
+  revalidatePath(`/${slug}/statistics`);
+  revalidatePath("/admin/funnel");
 
   redirect(`/${slug}/rep?logged=1`);
 }
