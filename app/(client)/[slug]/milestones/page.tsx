@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Ring } from "@/components/ui/ring";
 import { requireSession } from "@/lib/auth/session";
-import { getLatestKpi, listSetterWeekKpis, resolveClientAccess } from "@/lib/db/queries";
+import { getLatestEodDate, getLatestKpi, listSetterWeekKpis, resolveClientAccess } from "@/lib/db/queries";
 import { weekLabel, weekStartISO } from "@/lib/week";
 import { SetMilestonesForm } from "./set-milestones-form";
 
@@ -26,15 +26,34 @@ export default async function MilestonesPage({
   const session = await requireSession();
   const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
-  const weekStart = weekStartISO();
-  const [kpi, setterRows] = await Promise.all([
+  const currentWeekStart = weekStartISO();
+  const [kpi, currentRows] = await Promise.all([
     getLatestKpi(client.id),
-    listSetterWeekKpis(client.id, weekStart),
+    listSetterWeekKpis(client.id, currentWeekStart),
   ]);
+  // Like the dashboard: if no EODs landed this week yet (common early in the
+  // week, or when stats are backfilled to past dates), fall back to the most
+  // recent week that has activity so the tracker reflects real numbers.
+  let weekRows = currentRows;
+  let displayWeekStart = currentWeekStart;
+  let usingLatestWeek = false;
+  if (weekRows.length === 0) {
+    const latestEod = await getLatestEodDate(client.id);
+    if (latestEod) {
+      const latestWeekStart = weekStartISO(new Date(`${latestEod}T00:00:00Z`));
+      if (latestWeekStart !== currentWeekStart) {
+        weekRows = await listSetterWeekKpis(client.id, latestWeekStart);
+        displayWeekStart = latestWeekStart;
+        usingLatestWeek = true;
+      }
+    }
+  }
+  const displayWeekLabel = weekLabel(new Date(`${displayWeekStart}T00:00:00Z`));
 
-  // Actuals are summed LIVE from this week's setter EODs — not from a stored
-  // kpi_weekly.actuals (which nothing populates). Targets still come from kpi.
-  const a: Record<string, number> = setterRows.reduce(
+  // Actuals are summed LIVE from the shown week's setter EODs — not from a
+  // stored kpi_weekly.actuals (which nothing populates). Targets still come
+  // from kpi.
+  const a: Record<string, number> = weekRows.reduce(
     (acc, r) => ({
       callsBooked: acc.callsBooked + r.callsBooked,
       showUps: acc.showUps + r.showUps,
@@ -60,7 +79,7 @@ export default async function MilestonesPage({
         <p className="eyebrow">NOVA · gamified</p>
         <h1 className="mt-2 text-3xl font-semibold">Milestone tracker</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {weekLabel()} · KPI goals for the {client.name} sales team.
+          {displayWeekLabel}{usingLatestWeek ? " · most recent activity" : ""} · KPI goals for the {client.name} sales team.
         </p>
       </div>
 
@@ -68,7 +87,7 @@ export default async function MilestonesPage({
         <Card className="p-6">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="font-sans text-[15px] font-semibold">
-              This week&apos;s targets
+              {usingLatestWeek ? "Most recent week vs targets" : "This week's targets"}
             </h3>
             <span className="text-xs text-muted-foreground">
               Resets Sunday 11:59pm
@@ -103,7 +122,7 @@ export default async function MilestonesPage({
         </Card>
         <Card className="flex flex-col items-center p-6 text-center">
           <h3 className="mb-1 w-full text-left font-sans text-[15px] font-semibold">
-            This week
+            {usingLatestWeek ? "Most recent week" : "This week"}
           </h3>
           <Ring pct={weeklyPct} label="to goal" />
           <p className="mt-3 text-[13px] text-muted-foreground">
@@ -115,14 +134,14 @@ export default async function MilestonesPage({
       <Card className="p-6">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="font-sans text-[15px] font-semibold">
-            By setter — this week
+            By setter — {usingLatestWeek ? "most recent week" : "this week"}
           </h3>
           <span className="text-xs text-muted-foreground">from daily EODs</span>
         </div>
-        {setterRows.length === 0 ? (
+        {weekRows.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No EODs logged this week yet. Each setter&apos;s numbers appear here as
-            they submit their end-of-day.
+            No EODs logged yet. Each setter&apos;s numbers appear here as they
+            submit their end-of-day.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -137,7 +156,7 @@ export default async function MilestonesPage({
                 </tr>
               </thead>
               <tbody>
-                {setterRows.map((r) => (
+                {weekRows.map((r) => (
                   <tr key={r.setterUserId} className="border-b border-[color:var(--line)] last:border-0">
                     <td className="py-2.5 pr-3 font-medium">{r.setterName}</td>
                     <td className="py-2.5 px-3 text-right tabular-nums">{r.callsBooked}</td>
