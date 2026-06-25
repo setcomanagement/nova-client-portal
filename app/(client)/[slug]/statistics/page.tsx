@@ -2,9 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { getSession } from "@/lib/auth/session";
-import { getClientBySlug, listClientDailyKpis, type DailyKpi } from "@/lib/db/queries";
+import {
+  getClientBySlug,
+  listClientDailyKpis,
+  listClientMembers,
+  type DailyKpi,
+} from "@/lib/db/queries";
 import { StatisticsCharts, type TrendPoint } from "./statistics-charts";
 import { CommissionForm } from "./commission-form";
+import { AddEntryForm } from "./add-entry-form";
 
 /* ---- Range selector (drives the window for every metric on the page) ---- */
 const RANGES = [
@@ -57,9 +63,18 @@ export default async function StatisticsPage({
     (RANGES.find((r) => r.key === rangeParam)?.key as RangeKey) ?? "90";
   const days = RANGES.find((r) => r.key === range)!.days;
 
-  const [session, daily] = await Promise.all([
-    getSession(),
-    listClientDailyKpis(client.id, sinceISO(days)),
+  const session = await getSession();
+  // Segregation: a sales rep sees ONLY their own numbers; client/manager/ops
+  // see every setter's numbers combined.
+  const isRep = session?.role === "sales_rep";
+  const canManage =
+    session != null &&
+    ["client", "manager", "admin", "super_admin"].includes(session.role);
+  const scopedSetter = isRep ? session!.userId : undefined;
+
+  const [daily, members] = await Promise.all([
+    listClientDailyKpis(client.id, sinceISO(days), scopedSetter),
+    canManage ? listClientMembers(client.id) : Promise.resolve([]),
   ]);
 
   // Window totals, summed across every day in range.
@@ -130,9 +145,6 @@ export default async function StatisticsPage({
     convoToBook: d.totalConvos ? Math.round((d.callsBooked / d.totalConvos) * 100) : 0,
   }));
 
-  const canEdit =
-    session != null &&
-    ["client", "manager", "admin", "super_admin"].includes(session.role);
   const hasData = activeDays > 0;
 
   return (
@@ -140,9 +152,13 @@ export default async function StatisticsPage({
       <header className="flex flex-wrap items-end justify-between gap-4 border-b-2 border-ink pb-6">
         <div>
           <p className="eyebrow">NOVA · analytics</p>
-          <h1 className="mt-2 text-3xl font-semibold">{client.name} statistics</h1>
+          <h1 className="mt-2 text-3xl font-semibold">
+            {isRep ? "Your statistics" : `${client.name} statistics`}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Setter performance, trends and conversion — from daily EOD submissions.
+            {isRep
+              ? "Your own performance, trends and conversion — from your daily EODs."
+              : "Combined setter performance, trends and conversion — from daily EOD submissions."}
           </p>
         </div>
         <div className="flex items-center gap-1 rounded-lg border border-[color:var(--border)] p-1">
@@ -242,8 +258,24 @@ export default async function StatisticsPage({
         </div>
       </section>
 
+      {/* Add to statistics (managerial) */}
+      {canManage && (
+        <Card className="p-6">
+          <h3 className="mb-1 font-sans text-[15px] font-semibold">Add to statistics</h3>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Log numbers for a team member. This feeds the combined view above and
+            that member&apos;s own segregated stats.
+          </p>
+          <AddEntryForm
+            slug={slug}
+            members={members.map((m) => ({ id: m.id, name: m.name }))}
+            today={new Date().toISOString().slice(0, 10)}
+          />
+        </Card>
+      )}
+
       {/* Commission settings */}
-      {canEdit && (
+      {canManage && (
         <Card className="p-6">
           <h3 className="mb-1 font-sans text-[15px] font-semibold">Commission rate</h3>
           <p className="mb-4 text-sm text-muted-foreground">

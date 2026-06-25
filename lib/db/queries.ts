@@ -52,6 +52,11 @@ export async function setActiveAnnouncement(message: string): Promise<void> {
   await db.insert(announcements).values({ message, audience: "all", active: true });
 }
 
+/** Take down the live banner without posting a new one. */
+export async function clearActiveAnnouncement(): Promise<void> {
+  await db.update(announcements).set({ active: false });
+}
+
 /* ---- Leads ---- */
 export async function listLeads(clientId: string): Promise<LeadRow[]> {
   return db.select().from(leads).where(eq(leads.clientId, clientId)).orderBy(desc(leads.createdAt));
@@ -244,6 +249,7 @@ export interface DailyKpi {
 export async function listClientDailyKpis(
   clientId: string,
   since: string,
+  setterUserId?: string,
 ): Promise<DailyKpi[]> {
   const sum = (col: AnyColumn) => sql<number>`coalesce(sum(${col}), 0)::int`;
   const rows = await db
@@ -267,6 +273,8 @@ export async function listClientDailyKpis(
       and(
         eq(users.clientId, clientId),
         gte(eodSubmissions.submissionDate, since),
+        // Segregation: when set, only this setter's own rows (sales-rep view).
+        setterUserId ? eq(eodSubmissions.setterUserId, setterUserId) : undefined,
       ),
     )
     .groupBy(eodSubmissions.submissionDate)

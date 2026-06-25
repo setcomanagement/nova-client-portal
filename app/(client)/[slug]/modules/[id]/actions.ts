@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/auth/session";
 import {
-  getModuleForClient,
+  getGlobalModuleById,
   markModuleComplete,
   resolveClientAccess,
 } from "@/lib/db/queries";
@@ -19,7 +19,10 @@ export async function markCompleteAction(
     clientId: session.clientId,
   });
   if (!client) return;
-  const mod = await getModuleForClient(moduleId, client.id);
+  // Modules are a single GLOBAL catalog (clientId IS NULL), so validate against
+  // the global lookup — getModuleForClient would never match and the completion
+  // would silently never persist.
+  const mod = await getGlobalModuleById(moduleId);
   if (!mod) return;
   await markModuleComplete(session.userId, moduleId);
   revalidatePath(`/${slug}/modules/${moduleId}`);

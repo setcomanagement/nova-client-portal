@@ -2,10 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/session";
-import { setActiveAnnouncement } from "@/lib/db/queries";
+import { clearActiveAnnouncement, setActiveAnnouncement } from "@/lib/db/queries";
 
 export interface AnnState {
   ok?: boolean;
+  cleared?: boolean;
 }
 
 export async function postAnnouncement(
@@ -14,7 +15,12 @@ export async function postAnnouncement(
 ): Promise<AnnState> {
   await requireAdmin();
   const message = (formData.get("message")?.toString() ?? "").trim();
-  if (message) await setActiveAnnouncement(message);
+  // Empty message is an explicit "take the banner down", not a no-op.
+  if (message) {
+    await setActiveAnnouncement(message);
+  } else {
+    await clearActiveAnnouncement();
+  }
   revalidatePath("/admin");
-  return { ok: true };
+  return { ok: true, cleared: !message };
 }

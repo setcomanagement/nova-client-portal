@@ -32,7 +32,11 @@ export function AnnouncementComposer({ current }: { current: string | null }) {
         >
           {pending ? "Posting…" : "Post announcement"}
         </button>
-        {state.ok && <span className="text-sm text-[#8fb36a]">Posted — live on client pages.</span>}
+        {state.ok && (
+          <span className="text-sm text-[#8fb36a]">
+            {state.cleared ? "Banner cleared — no longer shown." : "Posted — live on client pages."}
+          </span>
+        )}
       </div>
     </form>
   );
