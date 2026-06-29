@@ -74,6 +74,8 @@ export interface LeadInput {
   email?: string | null;
   source?: string | null;
   stage?: string;
+  pipelineStage?: string;
+  leadType?: string;
   ownerUserId?: string | null;
   notes?: string | null;
 }
@@ -86,6 +88,8 @@ export async function createLead(clientId: string, input: LeadInput): Promise<Le
       email: input.email ?? null,
       source: input.source ?? null,
       stage: input.stage ?? "new",
+      ...(input.pipelineStage ? { pipelineStage: input.pipelineStage } : {}),
+      ...(input.leadType ? { leadType: input.leadType } : {}),
       ownerUserId: input.ownerUserId ?? null,
       notes: input.notes ?? null,
     })
@@ -104,9 +108,22 @@ export async function updateLead(
       email: input.email ?? null,
       source: input.source ?? null,
       stage: input.stage ?? "new",
+      ...(input.pipelineStage ? { pipelineStage: input.pipelineStage } : {}),
+      ...(input.leadType ? { leadType: input.leadType } : {}),
       ownerUserId: input.ownerUserId ?? null,
       notes: input.notes ?? null,
     })
+    .where(and(eq(leads.id, id), eq(leads.clientId, clientId)));
+}
+/** Targeted update for kanban drag — moves a lead to a new conversation stage. */
+export async function setLeadPipelineStage(
+  id: string,
+  clientId: string,
+  pipelineStage: string,
+): Promise<void> {
+  await db
+    .update(leads)
+    .set({ pipelineStage })
     .where(and(eq(leads.id, id), eq(leads.clientId, clientId)));
 }
 export async function deleteLead(id: string, clientId: string): Promise<void> {

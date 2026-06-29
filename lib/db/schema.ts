@@ -221,7 +221,12 @@ export const leads = pgTable(
     name: text("name").notNull(),
     email: text("email"),
     source: text("source"),
-    stage: text("stage").notNull().default("new"), // new|booked|showed|closed|lost
+    stage: text("stage").notNull().default("new"), // new|booked|showed|closed|lost (lifecycle/outcome; Calendly auto-writes)
+    // Sales-conversation funnel — independent axis from `stage`, owned by the rep.
+    // cold|rapport|pain_digging|solution_aware|pitch|follow_up
+    pipelineStage: text("pipeline_stage").notNull().default("cold"),
+    // inbound = the lead approached us; outbound = we approached them.
+    leadType: text("lead_type").notNull().default("inbound"),
     ownerUserId: uuid("owner_user_id").references(() => users.id, {
       onDelete: "set null",
     }),

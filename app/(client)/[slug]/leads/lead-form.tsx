@@ -6,6 +6,7 @@ import {
   updateLeadAction,
   type LeadFormState,
 } from "./actions";
+import { LEAD_TYPES, PIPELINE_STAGES } from "./pipeline";
 
 const init: LeadFormState = {};
 const field =
@@ -18,6 +19,8 @@ export interface LeadFormValues {
   email?: string | null;
   source?: string | null;
   stage?: string;
+  pipelineStage?: string;
+  leadType?: string;
   ownerUserId?: string | null;
   notes?: string | null;
 }
@@ -53,7 +56,27 @@ export function LeadForm({
           <input name="source" defaultValue={lead?.source ?? ""} placeholder="Webinar, IG DM, Referral…" className={field} />
         </label>
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-muted-foreground">Stage</span>
+          <span className="text-xs font-medium text-muted-foreground">Lead type</span>
+          <select name="leadType" defaultValue={lead?.leadType ?? "inbound"} className={field}>
+            {LEAD_TYPES.map((t) => (
+              <option key={t.key} value={t.key}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">Conversation stage</span>
+          <select name="pipelineStage" defaultValue={lead?.pipelineStage ?? "cold"} className={field}>
+            {PIPELINE_STAGES.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">Lifecycle</span>
           <select name="stage" defaultValue={lead?.stage ?? "new"} className={`${field} capitalize`}>
             {STAGES.map((s) => (
               <option key={s} value={s}>

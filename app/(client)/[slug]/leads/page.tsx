@@ -1,26 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { requireSession } from "@/lib/auth/session";
 import { listBookings, listLeads, resolveClientAccess } from "@/lib/db/queries";
+import { LeadsBoard, type BoardLead } from "./leads-board";
 
 const EDITOR_ROLES = ["client", "manager", "admin", "super_admin"];
-
-const STAGE: Record<string, string> = {
-  new: "badge-neutral",
-  booked: "badge-up",
-  showed: "badge-up",
-  closed: "badge-good",
-  lost: "badge-bad",
-};
 
 export default async function LeadsPage({
   params,
@@ -39,6 +23,17 @@ export default async function LeadsPage({
   const callCount = (leadId: string) =>
     bookings.filter((b) => b.leadId === leadId).length;
 
+  const boardLeads: BoardLead[] = leads.map((l) => ({
+    id: l.id,
+    name: l.name,
+    email: l.email,
+    source: l.source,
+    stage: l.stage,
+    pipelineStage: l.pipelineStage,
+    leadType: l.leadType,
+    calls: callCount(l.id),
+  }));
+
   return (
     <div className="flex flex-col gap-7">
       <div className="flex items-end justify-between gap-4">
@@ -46,7 +41,7 @@ export default async function LeadsPage({
           <p className="eyebrow">NOVA · pipeline</p>
           <h1 className="mt-2 text-3xl font-semibold">Leads</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Every booking ties to a lead.
+            Drag leads through the sales conversation funnel.
           </p>
         </div>
         {canEdit && (
@@ -58,38 +53,14 @@ export default async function LeadsPage({
           </Link>
         )}
       </div>
-      <Card className="px-2 py-1">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead>Stage</TableHead>
-              <TableHead className="text-right">Calls</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {leads.map((l) => (
-              <TableRow key={l.id} className="clickable">
-                <TableCell className="font-medium">
-                  <Link href={`/${slug}/leads/${l.id}`} className="hover:underline">
-                    {l.name}
-                  </Link>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{l.email}</TableCell>
-                <TableCell>{l.source}</TableCell>
-                <TableCell>
-                  <span className={`badge ${STAGE[l.stage] ?? "badge-neutral"}`}>
-                    {l.stage}
-                  </span>
-                </TableCell>
-                <TableCell className="text-right num">{callCount(l.id)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+
+      {boardLeads.length === 0 ? (
+        <div className="rounded-xl border border-[color:var(--rule)] bg-card/40 px-6 py-16 text-center text-sm text-muted-foreground">
+          No leads yet. {canEdit && "Add one to start building the pipeline."}
+        </div>
+      ) : (
+        <LeadsBoard slug={slug} leads={boardLeads} canEdit={canEdit} />
+      )}
     </div>
   );
 }

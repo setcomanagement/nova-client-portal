@@ -11,6 +11,7 @@ import {
 import type { BookingOutcome } from "@/lib/db/schema";
 import { isUuid } from "@/lib/utils";
 import { LeadForm } from "../lead-form";
+import { leadTypeLabel, pipelineLabel } from "../pipeline";
 import { DeleteLeadButton } from "./delete-lead-button";
 
 const EDITOR_ROLES = ["client", "manager", "admin", "super_admin"];
@@ -67,7 +68,7 @@ export default async function LeadDetail({
           <p className="eyebrow">NOVA · lead</p>
           <h1 className="mt-2 text-3xl font-semibold">{lead.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {lead.email} · {lead.source} · {lead.stage}
+            {lead.email} · {lead.source} · {leadTypeLabel(lead.leadType)} · {pipelineLabel(lead.pipelineStage)}
             {deal ? ` · $${deal.toLocaleString()}` : ""}
           </p>
         </div>
@@ -93,7 +94,9 @@ export default async function LeadDetail({
         <Card className="h-fit p-6">
           <h4 className="eyebrow mb-3 block">Lead</h4>
           <div className="flex flex-col text-sm">
-            <Row k="Stage" v={lead.stage} />
+            <Row k="Type" v={leadTypeLabel(lead.leadType)} />
+            <Row k="Conversation" v={pipelineLabel(lead.pipelineStage)} />
+            <Row k="Lifecycle" v={lead.stage} />
             <Row k="Owner" v={owner?.name ?? "Unassigned"} />
             <Row k="Bookings" v={String(bookings.length)} />
             <Row k="Deal value" v={deal ? `$${deal.toLocaleString()}` : "—"} />
@@ -119,6 +122,8 @@ export default async function LeadDetail({
               email: lead.email,
               source: lead.source,
               stage: lead.stage,
+              pipelineStage: lead.pipelineStage,
+              leadType: lead.leadType,
               ownerUserId: lead.ownerUserId,
               notes: lead.notes,
             }}

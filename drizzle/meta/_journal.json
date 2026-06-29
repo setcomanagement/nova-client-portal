@@ -99,6 +99,13 @@
       "when": 1782311929777,
       "tag": "0013_organic_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1782719809035,
+      "tag": "0014_volatile_champions",
+      "breakpoints": true
     }
   ]
 }
