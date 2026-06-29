@@ -126,6 +126,17 @@ export async function setLeadPipelineStage(
     .set({ pipelineStage })
     .where(and(eq(leads.id, id), eq(leads.clientId, clientId)));
 }
+/** Targeted update for the inline card toggle — flips inbound/outbound. */
+export async function setLeadType(
+  id: string,
+  clientId: string,
+  leadType: string,
+): Promise<void> {
+  await db
+    .update(leads)
+    .set({ leadType })
+    .where(and(eq(leads.id, id), eq(leads.clientId, clientId)));
+}
 export async function deleteLead(id: string, clientId: string): Promise<void> {
   await db.delete(leads).where(and(eq(leads.id, id), eq(leads.clientId, clientId)));
 }

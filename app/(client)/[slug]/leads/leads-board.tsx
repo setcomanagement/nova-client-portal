@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
-import { moveLeadStageAction } from "./actions";
+import { moveLeadStageAction, setLeadTypeAction } from "./actions";
 import { LEAD_TYPES, PIPELINE_STAGES } from "./pipeline";
 
 export interface BoardLead {
@@ -14,6 +14,16 @@ export interface BoardLead {
   pipelineStage: string;
   leadType: string;
   calls: number;
+  booking: { at: string; callType: string | null; status: string } | null;
+}
+
+function formatBooking(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 const LIFECYCLE: Record<string, string> = {
@@ -68,6 +78,21 @@ export function LeadsBoard({
       const res = await moveLeadStageAction(slug, id, toStage);
       if (!res.ok) {
         setLeads((ls) => ls.map((l) => (l.id === id ? { ...l, pipelineStage: prev } : l)));
+      }
+    });
+  }
+
+  function toggleType(id: string) {
+    const lead = leads.find((l) => l.id === id);
+    if (!lead) return;
+    const prev = lead.leadType;
+    const next = prev === "inbound" ? "outbound" : "inbound";
+    // Optimistic — flip immediately, revert on failure.
+    setLeads((ls) => ls.map((l) => (l.id === id ? { ...l, leadType: next } : l)));
+    startTransition(async () => {
+      const res = await setLeadTypeAction(slug, id, next);
+      if (!res.ok) {
+        setLeads((ls) => ls.map((l) => (l.id === id ? { ...l, leadType: prev } : l)));
       }
     });
   }
@@ -149,12 +174,50 @@ export function LeadsBoard({
                     >
                       {l.name}
                     </Link>
-                    <span className={`badge ${TYPE_BADGE[l.leadType] ?? "badge-neutral"} shrink-0`}>
-                      {l.leadType}
-                    </span>
+                    {canEdit ? (
+                      <button
+                        type="button"
+                        draggable={false}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={() => toggleType(l.id)}
+                        title="Click to toggle inbound / outbound"
+                        className={`badge ${TYPE_BADGE[l.leadType] ?? "badge-neutral"} shrink-0 cursor-pointer transition-opacity hover:opacity-75`}
+                      >
+                        {l.leadType}
+                      </button>
+                    ) : (
+                      <span className={`badge ${TYPE_BADGE[l.leadType] ?? "badge-neutral"} shrink-0`}>
+                        {l.leadType}
+                      </span>
+                    )}
                   </div>
                   {l.email && (
                     <div className="mt-1 truncate text-xs text-muted-foreground">{l.email}</div>
+                  )}
+                  {l.booking && (
+                    <div className="mt-2 flex items-center gap-1.5 text-xs">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className={`h-3.5 w-3.5 shrink-0 ${l.booking.status === "scheduled" ? "text-accent" : "text-muted-foreground"}`}
+                        aria-hidden
+                      >
+                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                        <path d="M16 2v4M8 2v4M3 10h18" />
+                      </svg>
+                      {l.booking.status === "scheduled" ? (
+                        <span className="font-medium text-accent">
+                          Booked {formatBooking(l.booking.at)}
+                          {l.booking.callType ? ` · ${l.booking.callType}` : ""}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          {formatBooking(l.booking.at)} · {l.booking.status.replace("_", "-")}
+                        </span>
+                      )}
+                    </div>
                   )}
                   <div className="mt-2.5 flex items-center justify-between gap-2">
                     <span className={`badge ${LIFECYCLE[l.stage] ?? "badge-neutral"}`}>
@@ -180,9 +243,10 @@ export function LeadsBoard({
 
       {canEdit && (
         <p className="text-xs text-muted-foreground">
-          Drag a lead between columns to update its conversation stage. Lifecycle
-          badges ({LEAD_TYPES.map((t) => t.label).join(" / ")} type, booked/showed/closed)
-          stay in sync with Calendly.
+          Drag a lead between columns to update its conversation stage. Click the{" "}
+          {LEAD_TYPES.map((t) => t.label).join(" / ")} badge to flip a lead between
+          inbound and outbound. The booking date and lifecycle badge
+          (booked/showed/closed) stay in sync with Calendly.
         </p>
       )}
     </div>

@@ -20,8 +20,19 @@ export default async function LeadsPage({
     listLeads(client.id),
     listBookings(client.id),
   ]);
-  const callCount = (leadId: string) =>
-    bookings.filter((b) => b.leadId === leadId).length;
+  // `bookings` arrives newest-first (scheduledAt desc). For each lead, surface
+  // the call they're booked for — prefer an active scheduled call, else the
+  // most recent booking on record.
+  const bookingFor = (leadId: string): BoardLead["booking"] => {
+    const mine = bookings.filter((b) => b.leadId === leadId);
+    if (mine.length === 0) return null;
+    const chosen = mine.find((b) => b.status === "scheduled") ?? mine[0];
+    return {
+      at: new Date(chosen.scheduledAt).toISOString(),
+      callType: chosen.callType,
+      status: chosen.status,
+    };
+  };
 
   const boardLeads: BoardLead[] = leads.map((l) => ({
     id: l.id,
@@ -31,7 +42,8 @@ export default async function LeadsPage({
     stage: l.stage,
     pipelineStage: l.pipelineStage,
     leadType: l.leadType,
-    calls: callCount(l.id),
+    calls: bookings.filter((b) => b.leadId === l.id).length,
+    booking: bookingFor(l.id),
   }));
 
   return (

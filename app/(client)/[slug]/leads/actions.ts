@@ -8,6 +8,7 @@ import {
   deleteLead,
   resolveClientAccess,
   setLeadPipelineStage,
+  setLeadType,
   updateLead,
 } from "@/lib/db/queries";
 import { LEAD_TYPE_KEYS, PIPELINE_KEYS } from "./pipeline";
@@ -90,6 +91,21 @@ export async function moveLeadStageAction(
     return { ok: false, error: "Unknown stage." };
   }
   await setLeadPipelineStage(id, client.id, pipelineStage);
+  revalidatePath(`/${slug}/leads`);
+  return { ok: true };
+}
+
+/** Inline card toggle — switch a lead between inbound and outbound. */
+export async function setLeadTypeAction(
+  slug: string,
+  id: string,
+  leadType: string,
+): Promise<MoveResult> {
+  const client = await requireEditableClient(slug);
+  if (!LEAD_TYPE_KEYS.includes(leadType)) {
+    return { ok: false, error: "Unknown lead type." };
+  }
+  await setLeadType(id, client.id, leadType);
   revalidatePath(`/${slug}/leads`);
   return { ok: true };
 }
