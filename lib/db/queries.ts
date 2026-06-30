@@ -17,6 +17,9 @@ import {
   moduleProgress,
   modules,
   recapJobs,
+  socialAccounts,
+  socialContent,
+  socialFollowerSnapshots,
   users,
   webhookEvents,
 } from "./schema";
@@ -26,6 +29,9 @@ import type {
   Chapter,
   IntegrationProvider,
   IntegrationStatus,
+  SocialAccountRow,
+  SocialContentRow,
+  SocialFollowerSnapshotRow,
 } from "./schema";
 import { isNull } from "drizzle-orm";
 import type { UserRole } from "@/lib/auth/jwt";
@@ -1251,4 +1257,210 @@ export async function listFeedback(): Promise<FeedbackWithUser[]> {
     userName: r.userName ?? "Unknown",
     userRole: (r.userRole ?? "team_member") as UserRole,
   }));
+}
+
+/* ------------------------------------------------------------------ *
+ * Social media tracking
+ * ------------------------------------------------------------------ */
+
+export async function getSocialAccount(
+  clientId: string,
+  platform: "youtube" | "instagram",
+): Promise<SocialAccountRow | null> {
+  const rows = await db
+    .select()
+    .from(socialAccounts)
+    .where(and(eq(socialAccounts.clientId, clientId), eq(socialAccounts.platform, platform)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/** Connect/refresh a channel config keyed by (clientId, platform). */
+export async function upsertSocialAccount(input: {
+  clientId: string;
+  platform: "youtube" | "instagram";
+  handle?: string | null;
+  channelId?: string | null;
+  uploadsPlaylistId?: string | null;
+  displayName?: string | null;
+  meta?: Record<string, string> | null;
+  lastSyncedAt?: Date | null;
+}): Promise<void> {
+  const existing = await getSocialAccount(input.clientId, input.platform);
+  const set = {
+    handle: input.handle ?? null,
+    channelId: input.channelId ?? null,
+    uploadsPlaylistId: input.uploadsPlaylistId ?? null,
+    displayName: input.displayName ?? null,
+    meta: input.meta ?? null,
+    ...(input.lastSyncedAt !== undefined ? { lastSyncedAt: input.lastSyncedAt } : {}),
+  };
+  if (existing) {
+    await db.update(socialAccounts).set(set).where(eq(socialAccounts.id, existing.id));
+    return;
+  }
+  await db.insert(socialAccounts).values({ clientId: input.clientId, platform: input.platform, ...set });
+}
+
+/** Just stamp the last sync time (after a successful YouTube pull). */
+export async function touchSocialAccountSync(clientId: string, platform: "youtube" | "instagram", at: Date): Promise<void> {
+  await db
+    .update(socialAccounts)
+    .set({ lastSyncedAt: at })
+    .where(and(eq(socialAccounts.clientId, clientId), eq(socialAccounts.platform, platform)));
+}
+
+export async function disconnectSocialAccount(clientId: string, platform: "youtube" | "instagram"): Promise<void> {
+  await db
+    .delete(socialAccounts)
+    .where(and(eq(socialAccounts.clientId, clientId), eq(socialAccounts.platform, platform)));
+}
+
+/** Follower/subscriber series for the growth chart (ascending by day). */
+export async function listFollowerSnapshots(
+  clientId: string,
+  platform: "youtube" | "instagram",
+  sinceISO: string,
+): Promise<SocialFollowerSnapshotRow[]> {
+  return db
+    .select()
+    .from(socialFollowerSnapshots)
+    .where(
+      and(
+        eq(socialFollowerSnapshots.clientId, clientId),
+        eq(socialFollowerSnapshots.platform, platform),
+        gte(socialFollowerSnapshots.capturedOn, sinceISO),
+      ),
+    )
+    .orderBy(asc(socialFollowerSnapshots.capturedOn));
+}
+
+/** One row per platform per day — overwrite the count if the day exists. */
+export async function upsertFollowerSnapshot(input: {
+  clientId: string;
+  platform: "youtube" | "instagram";
+  capturedOn: string; // YYYY-MM-DD
+  count: number;
+  source: "youtube_api" | "manual";
+}): Promise<void> {
+  const existing = await db
+    .select({ id: socialFollowerSnapshots.id })
+    .from(socialFollowerSnapshots)
+    .where(
+      and(
+        eq(socialFollowerSnapshots.clientId, input.clientId),
+        eq(socialFollowerSnapshots.platform, input.platform),
+        eq(socialFollowerSnapshots.capturedOn, input.capturedOn),
+      ),
+    )
+    .limit(1);
+  if (existing.length) {
+    await db
+      .update(socialFollowerSnapshots)
+      .set({ count: input.count, source: input.source })
+      .where(eq(socialFollowerSnapshots.id, existing[0].id));
+    return;
+  }
+  await db.insert(socialFollowerSnapshots).values({
+    clientId: input.clientId,
+    platform: input.platform,
+    capturedOn: input.capturedOn,
+    count: input.count,
+    source: input.source,
+  });
+}
+
+export async function listSocialContent(
+  clientId: string,
+  platform: "youtube" | "instagram",
+): Promise<SocialContentRow[]> {
+  return db
+    .select()
+    .from(socialContent)
+    .where(and(eq(socialContent.clientId, clientId), eq(socialContent.platform, platform)))
+    .orderBy(desc(socialContent.publishedAt));
+}
+
+/** Upsert a YouTube video by (clientId, externalId). On update we set the API
+ *  fields only and deliberately OMIT leadsGained so the manual overlay survives
+ *  re-syncs (same idea as upsertCalendlyBooking preserving `outcome`). */
+export async function upsertYoutubeVideo(input: {
+  clientId: string;
+  externalId: string;
+  title: string | null;
+  url: string | null;
+  publishedAt: Date | null;
+  views: number;
+  likes: number;
+  comments: number;
+}): Promise<"inserted" | "updated"> {
+  const existing = await db
+    .select({ id: socialContent.id })
+    .from(socialContent)
+    .where(and(eq(socialContent.clientId, input.clientId), eq(socialContent.externalId, input.externalId)))
+    .limit(1);
+  if (existing.length) {
+    await db
+      .update(socialContent)
+      .set({
+        title: input.title,
+        url: input.url,
+        publishedAt: input.publishedAt,
+        views: input.views,
+        likes: input.likes,
+        comments: input.comments,
+        updatedAt: new Date(),
+      })
+      .where(eq(socialContent.id, existing[0].id));
+    return "updated";
+  }
+  await db.insert(socialContent).values({
+    clientId: input.clientId,
+    platform: "youtube",
+    externalId: input.externalId,
+    title: input.title,
+    url: input.url,
+    publishedAt: input.publishedAt,
+    views: input.views,
+    likes: input.likes,
+    comments: input.comments,
+    source: "youtube_api",
+  });
+  return "inserted";
+}
+
+/** Manual content row (Instagram post). */
+export async function insertManualContent(input: {
+  clientId: string;
+  platform: "youtube" | "instagram";
+  title: string | null;
+  url: string | null;
+  publishedAt: Date | null;
+  views: number;
+  likes: number;
+  comments: number;
+  reach: number;
+  leadsGained: number;
+}): Promise<void> {
+  await db.insert(socialContent).values({ ...input, source: "manual" });
+}
+
+/** Edit the manual "leads gained" overlay on any content row (tenant-scoped). */
+export async function setContentLeadsGained(contentId: string, clientId: string, leadsGained: number): Promise<void> {
+  await db
+    .update(socialContent)
+    .set({ leadsGained, updatedAt: new Date() })
+    .where(and(eq(socialContent.id, contentId), eq(socialContent.clientId, clientId)));
+}
+
+export async function deleteManualContent(contentId: string, clientId: string): Promise<void> {
+  await db
+    .delete(socialContent)
+    .where(
+      and(
+        eq(socialContent.id, contentId),
+        eq(socialContent.clientId, clientId),
+        eq(socialContent.source, "manual"),
+      ),
+    );
 }

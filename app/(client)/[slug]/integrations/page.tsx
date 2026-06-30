@@ -1,10 +1,17 @@
 import { notFound } from "next/navigation";
 import { requireIntegrationsAccess } from "@/lib/auth/session";
-import { listBookings, listIntegrations, resolveClientAccess } from "@/lib/db/queries";
+import {
+  getSocialAccount,
+  listBookings,
+  listIntegrations,
+  resolveClientAccess,
+} from "@/lib/db/queries";
 import type { IntegrationStatus } from "@/lib/db/schema";
 import { calendlyConfigured } from "@/lib/calendly";
+import { youtubeConfigured } from "@/lib/youtube";
 import { IntegrationCard, type ProviderMeta } from "./integration-card";
 import { CalendlyCard } from "./calendly-card";
+import { YoutubeCard } from "./youtube-card";
 
 // Discord/Notion stay simple "coming soon" toggles; Calendly is the real OAuth card.
 const COMING: ProviderMeta[] = [
@@ -41,9 +48,10 @@ export default async function IntegrationsPage({
   const session = await requireIntegrationsAccess();
   const client = await resolveClientAccess({ slug, role: session.role, clientId: session.clientId });
   if (!client) notFound();
-  const [rows, bookings] = await Promise.all([
+  const [rows, bookings, yt] = await Promise.all([
     listIntegrations(client.id),
     listBookings(client.id),
+    getSocialAccount(client.id, "youtube"),
   ]);
   const byProvider = new Map(rows.map((r) => [r.provider, r]));
   const cal = byProvider.get("calendly");
@@ -69,6 +77,13 @@ export default async function IntegrationsPage({
           connectedAt={mock ? "preview" : fmt(cal?.connectedAt ?? null)}
           bookingCount={calBookings}
           notice={notice ?? null}
+        />
+        <YoutubeCard
+          slug={slug}
+          configured={youtubeConfigured()}
+          connected={!!yt?.channelId}
+          channelName={yt?.displayName ?? null}
+          connectedAt={fmt(yt?.createdAt ?? null)}
         />
         {COMING.map((meta) => {
           const row = byProvider.get(meta.provider);

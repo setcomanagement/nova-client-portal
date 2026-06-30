@@ -5,6 +5,7 @@ import {
   timestamp,
   uuid,
   integer,
+  bigint,
   numeric,
   boolean,
   jsonb,
@@ -397,3 +398,97 @@ export const bookings = pgTable(
   },
   (t) => [index("bookings_client_sched_idx").on(t.clientId, t.scheduledAt)],
 );
+
+/* ------------------------------------------------------------------ *
+ * Social media tracking — YouTube (auto via public API key) + Instagram
+ * (manual content tracker). Per client.
+ * ------------------------------------------------------------------ */
+export const socialPlatform = pgEnum("social_platform", ["youtube", "instagram"]);
+
+/* A client's connected channel/handle per platform. For YouTube this is
+   populated from the Integrations "Connect" card (handle/URL → resolved
+   channelId). For Instagram there's no account row needed (manual). */
+export const socialAccounts = pgTable(
+  "social_accounts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "cascade" }),
+    platform: socialPlatform("platform").notNull(),
+    handle: text("handle"), // "@channel" / URL as the user entered it
+    channelId: text("channel_id"), // resolved YouTube channelId
+    uploadsPlaylistId: text("uploads_playlist_id"), // YouTube uploads playlist
+    displayName: text("display_name"),
+    meta: jsonb("meta").$type<Record<string, string>>(), // thumbnail, etc.
+    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [unique("social_accounts_client_platform").on(t.clientId, t.platform)],
+);
+
+/* Follower/subscriber count over time — the growth trend. YouTube rows are
+   written by the sync (source=youtube_api); Instagram rows are manual. One
+   row per platform per day (repeat syncs overwrite). */
+export const socialFollowerSnapshots = pgTable(
+  "social_follower_snapshots",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "cascade" }),
+    platform: socialPlatform("platform").notNull(),
+    capturedOn: date("captured_on").notNull(),
+    count: integer("count").notNull().default(0), // subscribers / followers
+    source: text("source").notNull().default("manual"), // youtube_api | manual
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    unique("follower_snap_client_platform_day").on(t.clientId, t.platform, t.capturedOn),
+    index("follower_snap_client_platform_idx").on(t.clientId, t.platform),
+  ],
+);
+
+/* Per content piece. YouTube videos are upserted from the API by externalId
+   (videoId); Instagram posts are fully manual (externalId null). `leadsGained`
+   is a manual overlay preserved across YouTube re-syncs. */
+export const socialContent = pgTable(
+  "social_content",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "cascade" }),
+    platform: socialPlatform("platform").notNull(),
+    externalId: text("external_id"), // YouTube videoId; null for Instagram
+    title: text("title"),
+    url: text("url"),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    views: bigint("views", { mode: "number" }).notNull().default(0), // can exceed int
+    likes: integer("likes").notNull().default(0),
+    comments: integer("comments").notNull().default(0),
+    reach: integer("reach").notNull().default(0), // Instagram only
+    leadsGained: integer("leads_gained").notNull().default(0), // manual overlay
+    source: text("source").notNull(), // youtube_api | manual
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    // NULLs are distinct under a standard UNIQUE, so this is effectively
+    // "unique only when externalId is set" — manual IG rows don't collide.
+    unique("social_content_client_external").on(t.clientId, t.externalId),
+    index("social_content_client_platform_idx").on(t.clientId, t.platform),
+  ],
+);
+
+export type SocialAccountRow = typeof socialAccounts.$inferSelect;
+export type SocialFollowerSnapshotRow = typeof socialFollowerSnapshots.$inferSelect;
+export type SocialContentRow = typeof socialContent.$inferSelect;

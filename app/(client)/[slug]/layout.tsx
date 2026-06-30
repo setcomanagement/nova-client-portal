@@ -26,6 +26,10 @@ function navForRole(role: UserRole, slug: string): NavItem[] {
     nav.push({ href: `/${slug}/statistics`, label: "Statistics" });
     nav.push({ href: `/${slug}/leads`, label: "Leads" });
   }
+  // Social: client, manager (+ ops viewing) — not individual setters
+  if (role === "client" || role === "manager" || isOps) {
+    nav.push({ href: `/${slug}/social`, label: "Social" });
+  }
   // Recaps + Modules + Integrations: client-only (and ops viewing)
   if (role === "client" || isOps) {
     nav.push({ href: `/${slug}/recaps`, label: "Recaps" });
