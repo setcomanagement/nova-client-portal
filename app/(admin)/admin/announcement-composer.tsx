@@ -10,11 +10,11 @@ export function AnnouncementComposer({ current }: { current: string | null }) {
   return (
     <form action={action} className="flex flex-col gap-3">
       {current && (
-        <div className="flex items-start gap-3 rounded-lg border border-[#3a2a1c] bg-[#1c130a] p-3">
-          <span className="rounded-full bg-[#3a3119] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#d6a94e]">
+        <div className="flex items-start gap-3 rounded-lg border border-[#e6e3dd] bg-[#f7f7f4] p-3">
+          <span className="rounded-full bg-[#eceae4] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[#8a6414]">
             live
           </span>
-          <span className="text-sm text-[#e7d8c4]">{current}</span>
+          <span className="text-sm text-[#2f2f33]">{current}</span>
         </div>
       )}
       <textarea
@@ -22,7 +22,7 @@ export function AnnouncementComposer({ current }: { current: string | null }) {
         rows={2}
         defaultValue={current ?? ""}
         placeholder="Message shown on every client & setter page…"
-        className="w-full rounded-lg border border-[#3a2a1c] bg-[#1c130a] px-3 py-2 text-sm text-[#e7d8c4] outline-none focus:border-caramel"
+        className="w-full rounded-lg border border-[#e6e3dd] bg-[#f7f7f4] px-3 py-2 text-sm text-[#2f2f33] outline-none focus:border-caramel"
       />
       <div className="flex items-center gap-3">
         <button
@@ -33,7 +33,7 @@ export function AnnouncementComposer({ current }: { current: string | null }) {
           {pending ? "Posting…" : "Post announcement"}
         </button>
         {state.ok && (
-          <span className="text-sm text-[#8fb36a]">
+          <span className="text-sm text-[#4f6b34]">
             {state.cleared ? "Banner cleared — no longer shown." : "Posted — live on client pages."}
           </span>
         )}

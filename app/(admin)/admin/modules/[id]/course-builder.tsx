@@ -6,9 +6,9 @@ import { MODULE_CATEGORIES } from "@/lib/constants";
 import { deleteModuleAction, saveModuleAction } from "../actions";
 
 const field =
-  "w-full rounded-lg border border-[#3a2a1c] bg-[#1c130a] px-3 py-2 text-sm text-[#e7d8c4] outline-none focus:border-caramel placeholder:text-[#6b5a45]";
+  "w-full rounded-lg border border-[#e6e3dd] bg-[#f7f7f4] px-3 py-2 text-sm text-[#2f2f33] outline-none focus:border-caramel placeholder:text-[#a3a3a8]";
 const ghost =
-  "inline-flex items-center gap-1 rounded-md border border-[#3a2a1c] px-2.5 py-1 font-mono text-[11px] text-[#9c886a] transition hover:border-caramel hover:text-caramel";
+  "inline-flex items-center gap-1 rounded-md border border-[#e6e3dd] px-2.5 py-1 text-[11px] text-[#6b6b70] transition hover:border-caramel hover:text-caramel";
 
 function emptyLesson(): Lesson {
   return { title: "", videoUrl: "", body: "", summary: "", links: [] };
@@ -113,27 +113,27 @@ export function CourseBuilder({
   return (
     <div className="flex flex-col gap-6">
       {/* header / meta */}
-      <div className="rounded-xl border border-[#3a2a1c] bg-[#251910] p-6">
+      <div className="rounded-xl border border-[#e6e3dd] bg-[#ffffff] p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-caramel">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-caramel">
               NOVA playbook · course
             </p>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Module title"
-              className="mt-2 w-full border-0 bg-transparent text-2xl font-semibold text-white outline-none placeholder:text-[#6b5a45]"
+              className="mt-2 w-full border-0 bg-transparent text-2xl font-semibold text-ink outline-none placeholder:text-[#a3a3a8]"
             />
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
               placeholder="One line on what this module covers."
-              className="mt-1 w-full border-0 bg-transparent text-sm text-[#c9b79c] outline-none placeholder:text-[#6b5a45]"
+              className="mt-1 w-full border-0 bg-transparent text-sm text-[#6b6b70] outline-none placeholder:text-[#a3a3a8]"
             />
             <label className="mt-3 flex flex-col gap-1.5">
-              <span className="font-mono text-[11px] uppercase tracking-wide text-[#9c886a]">
+              <span className="text-[11px] uppercase tracking-wide text-[#6b6b70]">
                 Category
               </span>
               <select
@@ -150,7 +150,7 @@ export function CourseBuilder({
             </label>
           </div>
         </div>
-        <div className="mt-3 font-mono text-xs text-[#9c886a]">
+        <div className="mt-3 text-xs text-[#6b6b70]">
           {chapters.length} chapters · {totalLessons} lessons
         </div>
       </div>
@@ -160,17 +160,17 @@ export function CourseBuilder({
         {chapters.map((ch, ci) => (
           <div
             key={ci}
-            className="rounded-xl border border-[#3a2a1c] bg-[#251910] p-5"
+            className="rounded-xl border border-[#e6e3dd] bg-[#ffffff] p-5"
           >
             <div className="flex items-center gap-3">
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-caramel font-mono text-xs font-bold text-white">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-caramel text-xs font-bold text-white">
                 {ci + 1}
               </span>
               <input
                 value={ch.title}
                 onChange={(e) => setChapterTitle(ci, e.target.value)}
                 placeholder={`Chapter ${ci + 1} title`}
-                className="flex-1 border-0 border-b border-transparent bg-transparent pb-1 text-lg font-semibold text-white outline-none focus:border-[#3a2a1c] placeholder:text-[#6b5a45]"
+                className="flex-1 border-0 border-b border-transparent bg-transparent pb-1 text-lg font-semibold text-ink outline-none focus:border-[#e6e3dd] placeholder:text-[#a3a3a8]"
               />
               <button type="button" onClick={() => moveChapter(ci, -1)} className={ghost}>
                 ↑
@@ -181,33 +181,33 @@ export function CourseBuilder({
               <button
                 type="button"
                 onClick={() => removeChapter(ci)}
-                className={`${ghost} hover:border-[#7a3a2a] hover:text-[#d98a6a]`}
+                className={`${ghost} hover:border-[#d8b4a8] hover:text-[#9c4a2d]`}
               >
                 remove
               </button>
             </div>
 
             {/* lessons */}
-            <div className="mt-4 flex flex-col gap-3 border-l border-[#3a2a1c] pl-4">
+            <div className="mt-4 flex flex-col gap-3 border-l border-[#e6e3dd] pl-4">
               {ch.lessons.map((ls, li) => (
                 <div
                   key={li}
-                  className="rounded-lg border border-[#33241733] bg-[#1c130a] p-4"
+                  className="rounded-lg border border-[#e6e3dd] bg-[#f7f7f4] p-4"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[11px] text-[#9c886a]">
+                    <span className="text-[11px] text-[#6b6b70]">
                       {ci + 1}.{li + 1}
                     </span>
                     <input
                       value={ls.title}
                       onChange={(e) => setLesson(ci, li, { title: e.target.value })}
                       placeholder="Lesson title"
-                      className="flex-1 border-0 bg-transparent text-sm font-medium text-white outline-none placeholder:text-[#6b5a45]"
+                      className="flex-1 border-0 bg-transparent text-sm font-medium text-ink outline-none placeholder:text-[#a3a3a8]"
                     />
                     <button
                       type="button"
                       onClick={() => removeLesson(ci, li)}
-                      className={`${ghost} hover:border-[#7a3a2a] hover:text-[#d98a6a]`}
+                      className={`${ghost} hover:border-[#d8b4a8] hover:text-[#9c4a2d]`}
                     >
                       ✕
                     </button>
@@ -240,7 +240,7 @@ export function CourseBuilder({
                     className={`${field} mt-2`}
                   />
                   <label className="mt-2 flex flex-col gap-1.5">
-                    <span className="font-mono text-[11px] uppercase tracking-wide text-[#9c886a]">
+                    <span className="text-[11px] uppercase tracking-wide text-[#6b6b70]">
                       Lesson body (markdown)
                     </span>
                     <textarea
@@ -248,7 +248,7 @@ export function CourseBuilder({
                       onChange={(e) => setLesson(ci, li, { body: e.target.value })}
                       rows={9}
                       placeholder="Markdown content. Used when this lesson is text-based instead of a video."
-                      className={`${field} font-mono`}
+                      className={`${field}`}
                     />
                   </label>
                 </div>
@@ -263,14 +263,14 @@ export function CourseBuilder({
         <button
           type="button"
           onClick={addChapter}
-          className="rounded-xl border border-dashed border-[#3a2a1c] p-4 font-mono text-sm text-[#9c886a] transition hover:border-caramel hover:text-caramel"
+          className="rounded-xl border border-dashed border-[#e6e3dd] p-4 text-sm text-[#6b6b70] transition hover:border-caramel hover:text-caramel"
         >
           + add chapter
         </button>
       </div>
 
       {/* footer actions */}
-      <div className="sticky bottom-4 flex items-center justify-between gap-4 rounded-xl border border-[#3a2a1c] bg-[#251910] p-4">
+      <div className="sticky bottom-4 flex items-center justify-between gap-4 rounded-xl border border-[#e6e3dd] bg-[#ffffff] p-4">
         <div className="flex items-center gap-4">
           <button
             type="button"
@@ -280,14 +280,14 @@ export function CourseBuilder({
           >
             {pending ? "Saving…" : "Save course"}
           </button>
-          {saved && <span className="text-sm text-[#8fb36a]">Saved.</span>}
-          {error && <span className="text-sm text-[#d98a6a]">{error}</span>}
+          {saved && <span className="text-sm text-[#4f6b34]">Saved.</span>}
+          {error && <span className="text-sm text-[#9c4a2d]">{error}</span>}
         </div>
         <button
           type="button"
           onClick={remove}
           disabled={pending}
-          className="font-mono text-[11px] text-[#9c886a] transition hover:text-[#d98a6a] disabled:opacity-50"
+          className="text-[11px] text-[#6b6b70] transition hover:text-[#9c4a2d] disabled:opacity-50"
         >
           delete module
         </button>

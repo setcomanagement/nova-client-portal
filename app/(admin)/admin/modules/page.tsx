@@ -13,11 +13,11 @@ export default async function AdminModulesPage() {
     <div className="flex flex-col gap-7">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-caramel">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-caramel">
             nova / training
           </p>
-          <h1 className="mt-2 text-3xl font-semibold text-white">The NOVA playbook</h1>
-          <p className="mt-1 text-sm text-[#9c886a]">
+          <h1 className="mt-2 text-3xl font-semibold text-ink">The NOVA playbook</h1>
+          <p className="mt-1 text-sm text-[#6b6b70]">
             One shared catalog every client sees in their feed · {mods.length} module
             {mods.length === 1 ? "" : "s"} · {totalLessons} lessons. Open one to edit
             its chapters and lessons.
@@ -32,7 +32,7 @@ export default async function AdminModulesPage() {
       </div>
 
       {mods.length === 0 ? (
-        <div className="rounded-xl border border-[#3a2a1c] bg-[#251910] p-5 text-sm text-[#9c886a]">
+        <div className="rounded-xl border border-[#e6e3dd] bg-[#ffffff] p-5 text-sm text-[#6b6b70]">
           No modules yet. Add the first one to the playbook.
         </div>
       ) : (
@@ -42,13 +42,13 @@ export default async function AdminModulesPage() {
             const lessons = chapters.reduce((s, c) => s + c.lessons.length, 0);
             return (
               <Link key={m.id} href={`/admin/modules/${m.id}`}>
-                <div className="rounded-xl border border-[#3a2a1c] bg-[#251910] p-5 transition hover:border-caramel">
-                  <b className="text-white">{m.title}</b>
-                  <p className="mt-1 text-sm text-[#9c886a]">{m.description}</p>
-                  <div className="mt-3 font-mono text-xs text-[#9c886a]">
+                <div className="rounded-xl border border-[#e6e3dd] bg-[#ffffff] p-5 transition hover:border-caramel">
+                  <b className="text-ink">{m.title}</b>
+                  <p className="mt-1 text-sm text-[#6b6b70]">{m.description}</p>
+                  <div className="mt-3 text-xs text-[#6b6b70]">
                     {chapters.length} chapters · {lessons} lessons
                   </div>
-                  <div className="mt-3 font-mono text-xs text-caramel">edit course →</div>
+                  <div className="mt-3 text-xs text-caramel">edit course →</div>
                 </div>
               </Link>
             );

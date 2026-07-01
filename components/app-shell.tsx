@@ -41,19 +41,19 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const headerCls = dark
-    ? "border-[#3a2a1c] bg-[#1c130a]"
+    ? "border-[#e6e3dd] bg-[#f7f7f4]"
     : "border-border bg-cream/85 backdrop-blur";
-  const wm = dark ? "text-white" : "text-ink";
+  const wm = dark ? "text-ink" : "text-ink";
   const navLink = dark
-    ? "text-[#9c886a] hover:bg-[#2c1f15] hover:text-white"
+    ? "text-[#6b6b70] hover:bg-[#eceae4] hover:text-ink"
     : "text-muted-foreground hover:bg-secondary hover:text-ink";
-  const nm = dark ? "text-white" : "text-ink";
-  const rl = dark ? "text-[#9c886a]" : "text-muted-foreground";
+  const nm = dark ? "text-ink" : "text-ink";
+  const rl = dark ? "text-[#6b6b70]" : "text-muted-foreground";
   // Admin (dark "mission control") fills the window; client stays editorial width.
   const widthCls = dark ? "max-w-[100rem] px-6 lg:px-10" : "max-w-6xl px-5";
 
   return (
-    <div className={`flex min-h-screen flex-col ${dark ? "bg-[#1c130a]" : ""}`}>
+    <div className={`flex min-h-screen flex-col ${dark ? "bg-[#f7f7f4]" : ""}`}>
       <header className={`sticky top-0 z-30 border-b ${headerCls}`}>
         <div className={`mx-auto flex w-full items-center gap-7 py-3 ${widthCls}`}>
           <Link href="/home" className={`font-serif text-xl font-semibold tracking-tight ${wm}`}>
@@ -102,7 +102,7 @@ export function AppShell({
         )}
       </header>
       <main
-        className={`mx-auto w-full flex-1 py-10 ${widthCls} ${dark ? "text-[#e7d8c4]" : ""}`}
+        className={`mx-auto w-full flex-1 py-10 ${widthCls} ${dark ? "text-[#2f2f33]" : ""}`}
       >
         {children}
       </main>

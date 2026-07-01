@@ -20,29 +20,29 @@ export default async function AdminRecapsPage() {
   return (
     <div className="flex flex-col gap-7">
       <div>
-        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-caramel">
+        <p className="text-[11px] uppercase tracking-[0.14em] text-caramel">
           nova / after-call
         </p>
-        <h1 className="mt-2 text-3xl font-semibold text-white">Recap launcher</h1>
-        <p className="mt-1 text-sm text-[#9c886a]">
+        <h1 className="mt-2 text-3xl font-semibold text-ink">Recap launcher</h1>
+        <p className="mt-1 text-sm text-[#6b6b70]">
           Queue a recap for a client after a call, copy the command, and run it in
           Claude Code. The finished recap auto-lands in that client&apos;s Recaps tab.
         </p>
       </div>
 
-      <div className="rounded-xl border border-[#3a2a1c] bg-[#251910] p-6">
-        <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.14em] text-caramel">
+      <div className="rounded-xl border border-[#e6e3dd] bg-[#ffffff] p-6">
+        <p className="mb-4 text-[11px] uppercase tracking-[0.14em] text-caramel">
           queue a recap
         </p>
         <NewRecapJobForm clients={clients.map((c) => ({ id: c.id, name: c.name }))} />
       </div>
 
       <div>
-        <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.14em] text-caramel">
+        <p className="mb-3 text-[11px] uppercase tracking-[0.14em] text-caramel">
           pending · {pending.length}
         </p>
         {pending.length === 0 ? (
-          <div className="rounded-xl border border-[#3a2a1c] bg-[#251910] p-5 text-sm text-[#9c886a]">
+          <div className="rounded-xl border border-[#e6e3dd] bg-[#ffffff] p-5 text-sm text-[#6b6b70]">
             Nothing queued. Add a call above after your next client call.
           </div>
         ) : (
@@ -56,7 +56,7 @@ export default async function AdminRecapsPage() {
 
       {done.length > 0 && (
         <div>
-          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.14em] text-[#6b5a45]">
+          <p className="mb-3 text-[11px] uppercase tracking-[0.14em] text-[#a3a3a8]">
             done · {done.length}
           </p>
           <div className="flex flex-col gap-3 opacity-70">

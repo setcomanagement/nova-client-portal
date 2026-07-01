@@ -2,7 +2,7 @@ import { listAllEod, listAllUsers, listFeedback } from "@/lib/db/queries";
 
 function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-xl border border-[#3a2a1c] bg-[#251910] ${className}`}>{children}</div>
+    <div className={`rounded-xl border border-[#e6e3dd] bg-[#ffffff] ${className}`}>{children}</div>
   );
 }
 function pct(num: number, den: number): number {
@@ -13,10 +13,10 @@ function Bar({ label, value }: { label: string; value: number }) {
   return (
     <div className="mb-4 last:mb-0">
       <div className="mb-2 flex justify-between text-sm">
-        <span className="text-[#e7d8c4]">{label}</span>
-        <span className="font-mono text-[#e7d8c4]">{value}%</span>
+        <span className="text-[#2f2f33]">{label}</span>
+        <span className="text-[#2f2f33]">{value}%</span>
       </div>
-      <div className="h-2.5 overflow-hidden rounded-full bg-[#3a2a1c]">
+      <div className="h-2.5 overflow-hidden rounded-full bg-[#e6e3dd]">
         <div className={`h-full rounded-full ${tone}`} style={{ width: `${value}%` }} />
       </div>
     </div>
@@ -83,16 +83,16 @@ export default async function InsightsPage() {
   return (
     <div className="flex flex-col gap-7">
       <div>
-        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-caramel">nova / insights</p>
-        <h1 className="mt-2 text-3xl font-semibold text-white">Usage &amp; insights</h1>
-        <p className="mt-1 text-sm text-[#9c886a]">How the portal is used — and what to improve next.</p>
+        <p className="text-[11px] uppercase tracking-[0.14em] text-caramel">nova / insights</p>
+        <h1 className="mt-2 text-3xl font-semibold text-ink">Usage &amp; insights</h1>
+        <p className="mt-1 text-sm text-[#6b6b70]">How the portal is used — and what to improve next.</p>
       </div>
 
-      <Panel className="grid grid-cols-2 overflow-hidden font-mono sm:grid-cols-6">
+      <Panel className="grid grid-cols-2 overflow-hidden sm:grid-cols-6">
         {strip.map((s, i) => (
-          <div key={s.l} className={`p-4 ${i ? "border-l border-[#3a2a1c]" : ""}`}>
-            <div className="text-[10px] uppercase tracking-wide text-[#9c886a]">{s.l}</div>
-            <div className="mt-1.5 text-2xl font-bold text-white">{s.v}</div>
+          <div key={s.l} className={`p-4 ${i ? "border-l border-[#e6e3dd]" : ""}`}>
+            <div className="text-[10px] uppercase tracking-wide text-[#6b6b70]">{s.l}</div>
+            <div className="mt-1.5 text-2xl font-bold text-ink">{s.v}</div>
           </div>
         ))}
       </Panel>
@@ -100,7 +100,7 @@ export default async function InsightsPage() {
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
         <div className="flex flex-col gap-5">
           <Panel className="p-5">
-            <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.14em] text-caramel">
+            <p className="mb-4 text-[11px] uppercase tracking-[0.14em] text-caramel">
               EOD quality · all submissions
             </p>
             <Bar label="EOD completion (this week)" value={eodCompletion} />
@@ -109,12 +109,12 @@ export default async function InsightsPage() {
             <Bar label="Accuracy confirmed" value={accuracy} />
           </Panel>
           <Panel className="p-5">
-            <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.14em] text-caramel">
+            <p className="mb-4 text-[11px] uppercase tracking-[0.14em] text-caramel">
               improvement signals · auto-flagged
             </p>
             <div className="flex flex-col">
               {signals.map((s, i) => (
-                <div key={i} className="flex items-start gap-3 border-b border-[#3a2a1c] py-3 text-sm text-[#e7d8c4] last:border-0">
+                <div key={i} className="flex items-start gap-3 border-b border-[#e6e3dd] py-3 text-sm text-[#2f2f33] last:border-0">
                   <span className={`mt-1.5 h-2.5 w-2.5 flex-none rounded-full ${lampCls[s.tone]}`} />
                   {s.text}
                 </div>
@@ -123,17 +123,17 @@ export default async function InsightsPage() {
           </Panel>
         </div>
         <Panel className="h-fit p-5">
-          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.14em] text-caramel">
+          <p className="mb-4 text-[11px] uppercase tracking-[0.14em] text-caramel">
             feedback inbox
           </p>
           <div className="flex flex-col gap-4">
             {feedback.length === 0 ? (
-              <p className="text-sm text-[#9c886a]">No feedback yet.</p>
+              <p className="text-sm text-[#6b6b70]">No feedback yet.</p>
             ) : (
               feedback.map((f) => (
                 <div key={f.id} className="text-sm">
-                  <b className="text-[#e7d8c4]">&ldquo;{f.message}&rdquo;</b>
-                  <div className="mt-0.5 text-xs text-[#9c886a]">
+                  <b className="text-[#2f2f33]">&ldquo;{f.message}&rdquo;</b>
+                  <div className="mt-0.5 text-xs text-[#6b6b70]">
                     {f.userName} · {ago(f.createdAt)}
                   </div>
                 </div>

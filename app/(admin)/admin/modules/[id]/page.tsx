@@ -18,7 +18,7 @@ export default async function ModuleBuilderPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="text-sm text-[#9c886a]">
+      <div className="text-sm text-[#6b6b70]">
         <Link href="/admin/modules" className="text-caramel hover:underline">
           Modules
         </Link>{" "}

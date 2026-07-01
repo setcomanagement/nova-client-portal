@@ -44,28 +44,28 @@ export default async function AdminFunnelPage() {
   return (
     <div className="flex flex-col gap-7">
       <div>
-        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-caramel">
+        <p className="text-[11px] uppercase tracking-[0.14em] text-caramel">
           nova / funnel
         </p>
-        <h1 className="mt-2 text-3xl font-semibold text-white">Setter funnel</h1>
-        <p className="mt-1 text-sm text-[#9c886a]">
+        <h1 className="mt-2 text-3xl font-semibold text-ink">Setter funnel</h1>
+        <p className="mt-1 text-sm text-[#6b6b70]">
           Booked → showed → closed across every client, by setter.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-[#3a2a1c] bg-[#251910] font-mono sm:grid-cols-4">
+      <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-[#e6e3dd] bg-[#ffffff] sm:grid-cols-4">
         {ledger.map((s, i) => (
-          <div key={s.l} className={`p-4 ${i ? "border-l border-[#3a2a1c]" : ""}`}>
-            <div className="text-[10px] uppercase tracking-wide text-[#9c886a]">{s.l}</div>
-            <div className="mt-1.5 text-2xl font-bold text-white">{s.v}</div>
-            {s.sub && <div className="mt-0.5 text-[11px] text-[#9c886a]">{s.sub}</div>}
+          <div key={s.l} className={`p-4 ${i ? "border-l border-[#e6e3dd]" : ""}`}>
+            <div className="text-[10px] uppercase tracking-wide text-[#6b6b70]">{s.l}</div>
+            <div className="mt-1.5 text-2xl font-bold text-ink">{s.v}</div>
+            {s.sub && <div className="mt-0.5 text-[11px] text-[#6b6b70]">{s.sub}</div>}
           </div>
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-[#3a2a1c]">
+      <div className="overflow-hidden rounded-xl border border-[#e6e3dd]">
         <table className="w-full text-sm">
-          <thead className="bg-[#1c130a] font-mono text-[11px] uppercase tracking-wide text-[#9c886a]">
+          <thead className="bg-[#f7f7f4] text-[11px] uppercase tracking-wide text-[#6b6b70]">
             <tr>
               <th className="px-4 py-3 text-left">Setter</th>
               <th className="px-4 py-3 text-right">Booked</th>
@@ -77,20 +77,20 @@ export default async function AdminFunnelPage() {
           </thead>
           <tbody>
             {rows.length === 0 ? (
-              <tr className="border-t border-[#3a2a1c] bg-[#251910]">
-                <td colSpan={6} className="px-4 py-4 text-[#9c886a]">
+              <tr className="border-t border-[#e6e3dd] bg-[#ffffff]">
+                <td colSpan={6} className="px-4 py-4 text-[#6b6b70]">
                   No booking activity yet.
                 </td>
               </tr>
             ) : (
               rows.map((r) => (
-                <tr key={r.name} className="border-t border-[#3a2a1c] bg-[#251910]">
-                  <td className="px-4 py-3 font-semibold text-white">{r.name}</td>
-                  <td className="px-4 py-3 text-right font-mono text-white">{r.booked}</td>
-                  <td className="px-4 py-3 text-right font-mono text-white">{r.showed}</td>
-                  <td className="px-4 py-3 text-right font-mono text-[#9c886a]">{pct(r.showed, r.booked)}</td>
-                  <td className="px-4 py-3 text-right font-mono text-white">{r.closed}</td>
-                  <td className="px-4 py-3 text-right font-mono text-[#8fb36a]">{pct(r.closed, r.showed)}</td>
+                <tr key={r.name} className="border-t border-[#e6e3dd] bg-[#ffffff]">
+                  <td className="px-4 py-3 font-semibold text-ink">{r.name}</td>
+                  <td className="px-4 py-3 text-right text-ink">{r.booked}</td>
+                  <td className="px-4 py-3 text-right text-ink">{r.showed}</td>
+                  <td className="px-4 py-3 text-right text-[#6b6b70]">{pct(r.showed, r.booked)}</td>
+                  <td className="px-4 py-3 text-right text-ink">{r.closed}</td>
+                  <td className="px-4 py-3 text-right text-[#4f6b34]">{pct(r.closed, r.showed)}</td>
                 </tr>
               ))
             )}

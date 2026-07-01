@@ -9,7 +9,7 @@ import { AnnouncementComposer } from "./announcement-composer";
 
 function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-xl border border-[#3a2a1c] bg-[#251910] ${className}`}>
+    <div className={`rounded-xl border border-[#e6e3dd] bg-[#ffffff] ${className}`}>
       {children}
     </div>
   );
@@ -52,11 +52,11 @@ export default async function AdminOverview() {
     <div className="flex flex-col gap-7">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-caramel">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-caramel">
             nova / operator
           </p>
-          <h1 className="mt-2 text-3xl font-semibold text-white">Mission control</h1>
-          <p className="mt-1 text-sm text-[#9c886a]">
+          <h1 className="mt-2 text-3xl font-semibold text-ink">Mission control</h1>
+          <p className="mt-1 text-sm text-[#6b6b70]">
             {clients.length} client orgs · {setters.length} setters · live.
           </p>
         </div>
@@ -69,17 +69,17 @@ export default async function AdminOverview() {
       </div>
 
       {/* mono status strip */}
-      <Panel className="grid grid-cols-2 overflow-hidden font-mono sm:grid-cols-6">
+      <Panel className="grid grid-cols-2 overflow-hidden sm:grid-cols-6">
         {strip.map((s, i) => (
-          <div key={s.l} className={`p-4 ${i ? "border-l border-[#3a2a1c]" : ""}`}>
-            <div className="text-[10px] uppercase tracking-wide text-[#9c886a]">{s.l}</div>
-            <div className="mt-1.5 text-2xl font-bold text-white">{s.v}</div>
+          <div key={s.l} className={`p-4 ${i ? "border-l border-[#e6e3dd]" : ""}`}>
+            <div className="text-[10px] uppercase tracking-wide text-[#6b6b70]">{s.l}</div>
+            <div className="mt-1.5 text-2xl font-bold text-ink">{s.v}</div>
           </div>
         ))}
       </Panel>
 
       <div>
-        <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.14em] text-caramel">
+        <p className="mb-3 text-[11px] uppercase tracking-[0.14em] text-caramel">
           announcement · live on client &amp; setter pages
         </p>
         <Panel className="p-5">
@@ -88,7 +88,7 @@ export default async function AdminOverview() {
       </div>
 
       <div>
-        <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.14em] text-caramel">
+        <p className="mb-3 text-[11px] uppercase tracking-[0.14em] text-caramel">
           clients · click a card to open that dashboard
         </p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -103,25 +103,25 @@ export default async function AdminOverview() {
                     <span className="grid h-8 w-8 place-items-center rounded-lg bg-caramel text-xs font-semibold text-white">
                       {c.name.slice(0, 2).toUpperCase()}
                     </span>
-                    <b className="text-white">{c.name}</b>
+                    <b className="text-ink">{c.name}</b>
                   </div>
-                  <div className="mt-4 flex flex-col gap-2 font-mono text-[13px]">
+                  <div className="mt-4 flex flex-col gap-2 text-[13px]">
                     <div className="flex justify-between">
-                      <span className="text-[#9c886a]">members</span>
-                      <span className="text-white">{members.length}</span>
+                      <span className="text-[#6b6b70]">members</span>
+                      <span className="text-ink">{members.length}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#9c886a]">setters</span>
-                      <span className="text-white">{reps}</span>
+                      <span className="text-[#6b6b70]">setters</span>
+                      <span className="text-ink">{reps}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#9c886a]">status</span>
-                      <span className={connected ? "text-[#8fb36a]" : "text-[#9c886a]"}>
+                      <span className="text-[#6b6b70]">status</span>
+                      <span className={connected ? "text-[#4f6b34]" : "text-[#6b6b70]"}>
                         {connected ? "active" : "no members"}
                       </span>
                     </div>
                   </div>
-                  <div className="mt-4 font-mono text-xs text-caramel">open dashboard →</div>
+                  <div className="mt-4 text-xs text-caramel">open dashboard →</div>
                 </Panel>
               </Link>
             );
