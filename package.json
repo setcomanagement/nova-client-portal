@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:setup": "tsx scripts/setup-db.ts",
-    "check": "tsc --noEmit && eslint"
+    "check": "tsc --noEmit && eslint",
+    "sentinel": "node scripts/sentinel/run.mjs",
+    "sentinel:light": "node scripts/sentinel/run.mjs --light"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.4.6",
@@ -34,6 +36,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20",
