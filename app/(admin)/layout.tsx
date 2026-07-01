@@ -20,8 +20,14 @@ export default async function AdminLayout({
   const session = await requireAdmin();
   const user = await getUserById(session.userId);
 
+  // Command Center is Matt-only (super_admin) — surface it in nav for them only.
+  const nav: NavItem[] =
+    session.role === "super_admin"
+      ? [...ADMIN_NAV, { href: "/admin/command-center", label: "Command Center" }]
+      : ADMIN_NAV;
+
   return (
-    <AppShell role={session.role} name={user?.name ?? "Admin"} nav={ADMIN_NAV} dark>
+    <AppShell role={session.role} name={user?.name ?? "Admin"} nav={nav} dark>
       {children}
     </AppShell>
   );
