@@ -492,3 +492,12 @@ export const socialContent = pgTable(
 export type SocialAccountRow = typeof socialAccounts.$inferSelect;
 export type SocialFollowerSnapshotRow = typeof socialFollowerSnapshots.$inferSelect;
 export type SocialContentRow = typeof socialContent.$inferSelect;
+
+/* ---- Command Center morning briefing ---- */
+export const dailyBriefing = pgTable("daily_briefing", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  briefingDate: date("briefing_date").notNull().unique(),
+  sections: jsonb("sections").$type<Record<string, unknown>>().notNull(),
+  status: text("status").notNull().default("ok"), // ok | partial
+  generatedAt: timestamp("generated_at", { withTimezone: true }).notNull().defaultNow(),
+});

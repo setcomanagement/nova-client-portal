@@ -9,6 +9,7 @@ import {
   calendlyTrackedEvents,
   callRecaps,
   clients,
+  dailyBriefing,
   eodSubmissions,
   feedback,
   integrations,
@@ -1463,4 +1464,57 @@ export async function deleteManualContent(contentId: string, clientId: string): 
         eq(socialContent.source, "manual"),
       ),
     );
+}
+
+/* ---- Command Center morning briefing ---- */
+export type BriefingRow = typeof dailyBriefing.$inferSelect;
+/** One slice per module; unconnected modules carry {status:"not_connected"}. */
+export interface BriefingSections {
+  kpis?: unknown;
+  content?: unknown;
+  audience?: unknown;
+  calendar?: unknown;
+  actions?: unknown;
+}
+export async function upsertDailyBriefing(
+  briefingDate: string,
+  sections: BriefingSections,
+  status: "ok" | "partial",
+): Promise<void> {
+  await db
+    .insert(dailyBriefing)
+    .values({ briefingDate, sections: sections as Record<string, unknown>, status })
+    .onConflictDoUpdate({
+      target: dailyBriefing.briefingDate,
+      set: { sections: sections as Record<string, unknown>, status, generatedAt: new Date() },
+    });
+}
+export async function getLatestBriefing(): Promise<BriefingRow | null> {
+  const rows = await db
+    .select()
+    .from(dailyBriefing)
+    .orderBy(desc(dailyBriefing.briefingDate))
+    .limit(1);
+  return rows[0] ?? null;
+}
+export async function getBriefingByDate(briefingDate: string): Promise<BriefingRow | null> {
+  const rows = await db
+    .select()
+    .from(dailyBriefing)
+    .where(eq(dailyBriefing.briefingDate, briefingDate))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/** Bottleneck frequency across all setters' EODs on/after `since` (YYYY-MM-DD). */
+export async function listBottlenecksSince(
+  since: string,
+): Promise<{ label: string; count: number }[]> {
+  const rows = await db
+    .select({ label: eodSubmissions.bottleneck, count: sql<number>`count(*)::int` })
+    .from(eodSubmissions)
+    .where(and(gte(eodSubmissions.submissionDate, since), sql`${eodSubmissions.bottleneck} is not null`))
+    .groupBy(eodSubmissions.bottleneck)
+    .orderBy(desc(sql`count(*)`));
+  return rows.filter((r) => r.label).map((r) => ({ label: r.label as string, count: r.count }));
 }
