@@ -11,7 +11,10 @@ import { postBriefingDigest } from "@/lib/briefing/report";
 export async function POST(req: NextRequest) {
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   const isCron = req.headers.get("x-vercel-cron") != null;
-  if (!isCron && token !== process.env.BRIEFING_RUN_TOKEN) {
+  const expected = process.env.BRIEFING_RUN_TOKEN;
+  // Reject manual triggers unless a token is BOTH configured and matches — never
+  // let an unset env var (undefined === undefined) open the endpoint.
+  if (!isCron && (!expected || token !== expected)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   const dry = req.nextUrl.searchParams.get("dry") === "1";
